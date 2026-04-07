@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       --pink:      #D14B6A;
@@ -855,6 +856,59 @@
 <!-- ═══════════════════════════════════════════════════════════════ -->
 <script>
 // ════════════════════════════════════════════════════════════════
+//  SUPABASE
+// ════════════════════════════════════════════════════════════════
+const SUPABASE_URL  = 'https://qjseewzzmdcconjmkfhu.supabase.co';
+const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqc2Vld3p6bWRjY29uam1rZmh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzcwNTUsImV4cCI6MjA5MTE1MzA1NX0.GwDVeRj1GeNtBwb6AfNcDufo51ok2jROKGdHJWZn6Ys';
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function loadProfilesFromSupabase() {
+  try {
+    const { data, error } = await db.from('profiles').select('*');
+    if (error) throw error;
+    if (!data || data.length === 0) return;
+    data.forEach(row => {
+      const idx = DATA.members.findIndex(m => m.email.toLowerCase() === row.email.toLowerCase());
+      if (idx !== -1) {
+        DATA.members[idx].profile = {
+          photo:     row.photo     || '',
+          job:       row.job       || '',
+          family:    row.family    || '',
+          how_heard: row.how_heard || '',
+          fav_book:  row.fav_book  || '',
+          fav_genre: row.fav_genre || '',
+        };
+      }
+    });
+  } catch(e) {
+    console.warn('Could not load profiles from Supabase:', e.message);
+  }
+}
+
+async function saveProfileToSupabase(email, profile) {
+  try {
+    // Check if a row already exists for this email
+    const { data: existing } = await db.from('profiles').select('id').eq('email', email.toLowerCase()).maybeSingle();
+    const payload = {
+      email:     email.toLowerCase(),
+      photo:     profile.photo     || '',
+      job:       profile.job       || '',
+      family:    profile.family    || '',
+      how_heard: profile.how_heard || '',
+      fav_book:  profile.fav_book  || '',
+      fav_genre: profile.fav_genre || '',
+    };
+    if (existing) {
+      await db.from('profiles').update(payload).eq('email', email.toLowerCase());
+    } else {
+      await db.from('profiles').insert(payload);
+    }
+  } catch(e) {
+    console.warn('Could not save profile to Supabase:', e.message);
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
 //  PASSWORDS  (change these!)
 // ════════════════════════════════════════════════════════════════
 const MEMBER_PW = "bookclub";   // shared with all members
@@ -1100,10 +1154,12 @@ function renderPublicMembers() {
 // ════════════════════════════════════════════════════════════════
 //  PASSWORDS
 // ════════════════════════════════════════════════════════════════
-function checkMemberPw() {
+async function checkMemberPw() {
   if (document.getElementById('pw-input').value === MEMBER_PW) {
     document.getElementById('members-gate').style.display = 'none';
     document.getElementById('members-content').style.display = 'block';
+    document.getElementById('members-grid').innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:0.88rem;">Loading members…</div>';
+    await loadProfilesFromSupabase();
     renderPublicMembers();
     renderPublicPoll();
   } else {
@@ -1374,14 +1430,14 @@ function closeAdminProfileModal(e) {
   document.body.style.overflow = '';
 }
 
-function saveAdminProfile() {
+async function saveAdminProfile() {
   const idx = parseInt(document.getElementById('apm-idx').value);
   if (isNaN(idx) || !DATA.members[idx]) return;
   const newName  = document.getElementById('apm-name').value.trim();
   const newEmail = document.getElementById('apm-email').value.trim();
   if (newName)  DATA.members[idx].name  = newName;
   if (newEmail) DATA.members[idx].email = newEmail;
-  DATA.members[idx].profile = {
+  const profile = {
     photo:     document.getElementById('apm-photo').value.trim(),
     job:       document.getElementById('apm-job').value.trim(),
     family:    document.getElementById('apm-family').value.trim(),
@@ -1389,7 +1445,12 @@ function saveAdminProfile() {
     fav_book:  document.getElementById('apm-favbook').value.trim(),
     fav_genre: document.getElementById('apm-favgenre').value.trim(),
   };
+  DATA.members[idx].profile = profile;
   saveData();
+  // Save to Supabase so everyone sees it
+  const emailToSave = newEmail || DATA.members[idx].email;
+  toast('Saving…');
+  await saveProfileToSupabase(emailToSave, profile);
   renderPublicMembers();
   renderAdminMembers();
   renderHero();
