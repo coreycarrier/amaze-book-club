@@ -1,0 +1,1887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book Club</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --pink:      #D14B6A;
+      --pink-dk:   #BB3F5E;
+      --pink-lt:   #FDE8EE;
+      --coral:     #E8673A;
+      --coral-lt:  #FEF0EB;
+      --green:     #1E7A4A;
+      --green-lt:  #EDFBF4;
+      --amber:     #C87830;
+      --amber-lt:  #FEF8EC;
+      --cream:     #FDF8F4;
+      --blush:     #F9EDE8;
+      --warm-white:#FFFDFB;
+      --dark:      #1C1410;
+      --text:      #2D1F1A;
+      --muted:     #8A716A;
+      --border:    #EAE0DA;
+      --admin-bg:  #0F1923;
+      --admin-acc: #3B8ECA;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { font-family:'Inter',sans-serif; background:var(--cream); color:var(--text); line-height:1.65; -webkit-font-smoothing:antialiased; }
+
+    /* ── NAV ── */
+    nav { background:var(--warm-white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:200; }
+    .nav-inner { max-width:1100px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; padding:0 32px; }
+    .nav-logo { font-family:'DM Serif Display',serif; font-size:1.3rem; color:var(--dark); text-decoration:none; padding:18px 0; }
+    .nav-logo span { color:var(--pink); font-style:italic; }
+    nav ul { display:flex; list-style:none; gap:2px; }
+    nav ul li a { display:block; color:var(--muted); text-decoration:none; padding:8px 14px; font-size:0.82rem; font-weight:500; border-radius:6px; transition:all .15s; }
+    nav ul li a:hover { color:var(--pink); background:var(--pink-lt); }
+
+    /* ── HERO ── */
+    .hero { background:linear-gradient(160deg,#FDF0F4 0%,#FDF8F4 50%,#FEF3EE 100%); border-bottom:1px solid var(--border); padding:72px 32px 80px; }
+    .hero-inner { max-width:1100px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center; }
+    .hero-eyebrow { display:inline-flex; align-items:center; gap:6px; font-size:0.75rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--pink); margin-bottom:18px; }
+    .hero-eyebrow::before { content:''; width:20px; height:1.5px; background:var(--pink); }
+    .hero h1 { font-family:'DM Serif Display',serif; font-size:clamp(2.8rem,4.5vw,4.2rem); color:var(--dark); line-height:1.05; letter-spacing:-.02em; margin-bottom:18px; }
+    .hero h1 em { color:var(--pink); font-style:italic; }
+    .hero-desc { color:var(--muted); font-size:1rem; max-width:420px; margin-bottom:36px; line-height:1.7; }
+    .hero-pills { display:flex; gap:10px; flex-wrap:wrap; }
+    .hero-pill { background:var(--warm-white); border:1px solid var(--border); color:var(--text); padding:8px 16px; border-radius:30px; font-size:0.8rem; font-weight:500; }
+    .hero-pill strong { color:var(--pink); }
+    .hero-book { display:flex; flex-direction:column; align-items:center; gap:20px; }
+    .hero-book-card { background:var(--warm-white); border:1px solid var(--border); border-radius:20px; padding:28px; box-shadow:0 8px 40px rgba(28,20,16,.09); width:100%; display:flex; gap:24px; align-items:flex-start; }
+    .cover-img-wrap { flex-shrink:0; width:110px; }
+    .cover-img-wrap img { width:110px; border-radius:6px; box-shadow:4px 6px 20px rgba(28,20,16,.2); display:block; }
+    .cover-fallback { width:110px; height:165px; border-radius:6px; background:linear-gradient(160deg,var(--pink) 0%,var(--coral) 100%); display:none; align-items:center; justify-content:center; color:#fff; font-family:'DM Serif Display',serif; font-style:italic; font-size:0.8rem; text-align:center; padding:12px; line-height:1.4; box-shadow:4px 6px 20px rgba(28,20,16,.2); }
+    .hero-book-info { flex:1; min-width:0; }
+    .hero-book-label { font-size:0.68rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--pink); margin-bottom:6px; }
+    .hero-book-title { font-family:'DM Serif Display',serif; font-style:italic; font-size:1.3rem; color:var(--dark); line-height:1.2; margin-bottom:4px; }
+    .hero-book-author { font-size:0.82rem; color:var(--muted); margin-bottom:16px; }
+    .mdl-list { display:flex; flex-direction:column; gap:6px; }
+    .mdl-item { display:flex; align-items:center; gap:8px; font-size:0.83rem; color:var(--text); }
+    .mdl-icon { width:16px; height:16px; color:var(--muted); flex-shrink:0; }
+    .rsvp-mini { display:flex; gap:6px; flex-wrap:wrap; margin-top:14px; }
+    .rsvp-chip { font-size:0.7rem; font-weight:600; padding:3px 10px; border-radius:6px; }
+    .rc-yes { background:#F0FBF6; color:#1A7A4A; }
+    .rc-maybe { background:#FEF9EC; color:#9A6A10; }
+    .rc-no { background:#FEF0F0; color:#A83030; }
+    .rc-tbd { background:#F4F0EE; color:var(--muted); }
+
+    /* ── LAYOUT ── */
+    .page { max-width:1100px; margin:0 auto; padding:0 32px; }
+    .section { padding:72px 0; }
+    .section.tinted { background:var(--blush); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+    .section-head { margin-bottom:36px; }
+    .section-title { font-family:'DM Serif Display',serif; font-size:2rem; color:var(--dark); letter-spacing:-.02em; margin-bottom:6px; }
+    .section-sub { font-size:0.9rem; color:var(--muted); }
+    .section-rule { width:40px; height:2px; background:var(--pink); margin-top:10px; }
+
+    /* ── STATS ── */
+    .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:40px; }
+    .stat-card { background:var(--warm-white); border:1px solid var(--border); border-radius:12px; padding:22px 20px; }
+    .stat-num { font-family:'DM Serif Display',serif; font-size:2.2rem; color:var(--pink); line-height:1; letter-spacing:-.02em; }
+    .stat-lbl { font-size:0.72rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+
+    /* ── BOOKS ── */
+    .books-container { background:var(--warm-white); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+    .book-row { display:flex; align-items:center; gap:16px; padding:14px 24px; border-bottom:1px solid #F4EDE8; transition:background .12s; }
+    .book-row:last-child { border-bottom:none; }
+    .book-row:hover { background:var(--cream); }
+    .book-num { font-size:0.75rem; font-weight:600; color:var(--muted); width:22px; text-align:right; flex-shrink:0; }
+    .book-swatch { width:3px; height:36px; border-radius:2px; flex-shrink:0; }
+    .sw-high { background:linear-gradient(#1A7A4A,#5EBD8A); }
+    .sw-mid  { background:linear-gradient(#C87830,#E8A860); }
+    .sw-low  { background:linear-gradient(var(--pink),#E8A0B0); }
+    .book-info { flex:1; min-width:0; }
+    .book-title { font-family:'DM Serif Display',serif; font-style:italic; font-size:1rem; color:var(--dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .book-meta { font-size:0.72rem; color:var(--muted); font-weight:500; }
+    .book-score-col { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+    .score-bar-bg { width:80px; height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
+    .score-bar-fill { height:100%; border-radius:2px; }
+    .sbf-high { background:linear-gradient(90deg,#1A7A4A,#5EBD8A); }
+    .sbf-mid  { background:linear-gradient(90deg,#C87830,#E8A860); }
+    .sbf-low  { background:linear-gradient(90deg,var(--pink),#E8A0B0); }
+    .score-val { font-size:0.9rem; font-weight:600; color:var(--text); width:30px; text-align:right; }
+
+    /* ── WHATSAPP ── */
+    .community-card { background:var(--warm-white); border:1px solid var(--border); border-radius:20px; padding:48px 40px; display:flex; align-items:center; justify-content:space-between; gap:32px; flex-wrap:wrap; box-shadow:0 2px 20px rgba(28,20,16,.06); }
+    .community-card h3 { font-family:'DM Serif Display',serif; font-size:1.7rem; color:var(--dark); margin-bottom:8px; letter-spacing:-.02em; }
+    .community-card p { color:var(--muted); font-size:0.95rem; }
+    .wa-btn { display:inline-flex; align-items:center; gap:10px; background:#25D366; color:#fff; text-decoration:none; padding:14px 26px; border-radius:50px; font-size:0.9rem; font-weight:600; box-shadow:0 4px 20px rgba(37,211,102,.3); transition:transform .15s,box-shadow .15s; white-space:nowrap; }
+    .wa-btn:hover { transform:translateY(-2px); box-shadow:0 6px 28px rgba(37,211,102,.4); }
+    .wa-svg { width:20px; height:20px; fill:#fff; flex-shrink:0; }
+
+    /* ── MEMBER GATE ── */
+    .gate-outer { display:flex; justify-content:center; padding:12px 0; }
+    .gate-card { background:var(--warm-white); border:1px solid var(--border); border-radius:20px; padding:52px 44px; width:100%; max-width:460px; text-align:center; box-shadow:0 4px 28px rgba(28,20,16,.08); }
+    .gate-icon { font-size:2.6rem; margin-bottom:16px; display:block; }
+    .gate-card h3 { font-family:'DM Serif Display',serif; font-size:1.6rem; color:var(--dark); margin-bottom:8px; }
+    .gate-card p { font-size:0.88rem; color:var(--muted); margin-bottom:28px; }
+    .gate-form { display:flex; gap:8px; }
+    .gate-input { flex:1; font-family:'Inter',sans-serif; padding:11px 16px; border:1.5px solid var(--border); border-radius:10px; font-size:0.9rem; background:var(--cream); color:var(--text); outline:none; transition:border-color .2s; }
+    .gate-input:focus { border-color:var(--pink); }
+    .gate-btn { font-family:'Inter',sans-serif; background:var(--pink); color:#fff; border:none; padding:11px 22px; border-radius:10px; font-size:0.88rem; font-weight:600; cursor:pointer; transition:background .15s; white-space:nowrap; }
+    .gate-btn:hover { background:var(--pink-dk); }
+    .gate-err { display:none; color:var(--coral); font-size:0.8rem; margin-top:10px; }
+
+    /* ── MEMBERS GRID ── */
+    #members-content { display:none; }
+    .members-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; margin-bottom:44px; }
+    .member-card { background:var(--warm-white); border:1px solid var(--border); border-radius:16px; padding:22px 14px; text-align:center; transition:transform .14s,box-shadow .14s; }
+    .member-card:hover { transform:translateY(-3px); box-shadow:0 8px 28px rgba(28,20,16,.1); }
+    .m-avatar { width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'DM Serif Display',serif; font-size:1.15rem; color:#fff; margin:0 auto 10px; }
+    .m-name { font-size:0.85rem; font-weight:500; color:var(--dark); line-height:1.3; }
+    .m-status { display:inline-block; margin-top:6px; font-size:0.67rem; font-weight:600; padding:3px 9px; border-radius:6px; }
+    .ms-g { background:#F0FBF6; color:#1A7A4A; }
+    .ms-m { background:#FEF9EC; color:#9A6A10; }
+    .ms-d { background:#FEF0F0; color:#A83030; }
+    .ms-p { background:#F4F0EE; color:var(--muted); }
+
+    /* ── FORMS ── */
+    .form-card { background:var(--warm-white); border:1px solid var(--border); border-radius:16px; padding:32px; margin-bottom:20px; }
+    .form-card h3 { font-family:'DM Serif Display',serif; font-size:1.35rem; color:var(--dark); margin-bottom:4px; }
+    .form-sub { font-size:0.84rem; color:var(--muted); margin-bottom:24px; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+    .fg { margin-bottom:16px; }
+    .fl { display:block; font-size:0.7rem; font-weight:600; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+    .fi, .fta { width:100%; font-family:'Inter',sans-serif; padding:10px 14px; border:1.5px solid var(--border); border-radius:10px; font-size:0.9rem; background:var(--cream); color:var(--text); outline:none; transition:border-color .2s; }
+    .fi:focus, .fta:focus { border-color:var(--pink); }
+    .fta { min-height:86px; resize:vertical; }
+    .btn { font-family:'Inter',sans-serif; border:none; padding:10px 22px; border-radius:10px; font-size:0.88rem; font-weight:600; cursor:pointer; transition:all .15s; display:inline-flex; align-items:center; gap:7px; }
+    .btn-pink { background:var(--pink); color:#fff; }
+    .btn-pink:hover { background:var(--pink-dk); }
+    .btn-green { background:var(--green); color:#fff; }
+    .btn-green:hover { background:#166040; }
+    .btn-outline { background:transparent; color:var(--pink); border:1.5px solid var(--pink); }
+    .btn-outline:hover { background:var(--pink-lt); }
+    .btn-sm { padding:6px 14px; font-size:0.78rem; }
+    .btn-danger { background:transparent; color:#A83030; border:1.5px solid #D0A0A0; }
+    .btn-danger:hover { background:#FEF0F0; border-color:#A83030; }
+
+    .unsub-bar { background:var(--blush); border:1px solid #EADED8; border-radius:12px; padding:18px 24px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+    .unsub-bar p { font-size:0.84rem; color:var(--muted); font-style:italic; }
+    .unsub-link { font-family:'Inter',sans-serif; color:var(--coral); border:1.5px solid var(--coral); background:transparent; padding:7px 16px; border-radius:8px; font-size:0.8rem; font-weight:600; cursor:pointer; text-decoration:none; transition:all .14s; white-space:nowrap; }
+    .unsub-link:hover { background:var(--coral); color:#fff; }
+
+    /* ── ADMIN PANEL ── */
+    #admin-area { background:var(--admin-bg); }
+    .admin-inner { max-width:1100px; margin:0 auto; padding:72px 32px; }
+    .admin-header { margin-bottom:48px; }
+    .admin-badge { display:inline-flex; align-items:center; gap:8px; background:rgba(59,142,202,.15); border:1px solid rgba(59,142,202,.3); color:var(--admin-acc); font-size:0.72rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; padding:5px 14px; border-radius:20px; margin-bottom:14px; }
+    .admin-title { font-family:'DM Serif Display',serif; font-size:2.2rem; color:#fff; letter-spacing:-.02em; margin-bottom:8px; }
+    .admin-sub { color:rgba(255,255,255,.45); font-size:0.9rem; }
+
+    /* admin gate */
+    #admin-gate { display:flex; justify-content:center; }
+    .admin-gate-card { background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:20px; padding:52px 44px; width:100%; max-width:440px; text-align:center; }
+    .admin-gate-card h3 { font-family:'DM Serif Display',serif; font-size:1.5rem; color:#fff; margin-bottom:8px; }
+    .admin-gate-card p { font-size:0.86rem; color:rgba(255,255,255,.5); margin-bottom:26px; }
+    .admin-input { flex:1; font-family:'Inter',sans-serif; padding:11px 16px; border:1.5px solid rgba(255,255,255,.15); border-radius:10px; font-size:0.9rem; background:rgba(255,255,255,.07); color:#fff; outline:none; transition:border-color .2s; }
+    .admin-input:focus { border-color:var(--admin-acc); }
+    .admin-input::placeholder { color:rgba(255,255,255,.3); }
+    .btn-admin { font-family:'Inter',sans-serif; background:var(--admin-acc); color:#fff; border:none; padding:11px 22px; border-radius:10px; font-size:0.88rem; font-weight:600; cursor:pointer; transition:background .15s; white-space:nowrap; }
+    .btn-admin:hover { background:#2E7AB8; }
+    .admin-gate-err { display:none; color:#FF8888; font-size:0.8rem; margin-top:10px; }
+
+    /* admin content */
+    #admin-content { display:none; }
+    .admin-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:36px; border-bottom:1px solid rgba(255,255,255,.1); padding-bottom:0; }
+    .admin-tab { font-family:'Inter',sans-serif; background:transparent; border:none; color:rgba(255,255,255,.45); padding:10px 18px; font-size:0.85rem; font-weight:500; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:all .15s; }
+    .admin-tab.active { color:#fff; border-bottom-color:var(--admin-acc); }
+    .admin-tab:hover:not(.active) { color:rgba(255,255,255,.8); }
+    .admin-panel { display:none; }
+    .admin-panel.active { display:block; }
+
+    .admin-card { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:28px; margin-bottom:20px; }
+    .admin-card h4 { font-family:'DM Serif Display',serif; font-size:1.2rem; color:#fff; margin-bottom:4px; }
+    .admin-card-sub { font-size:0.82rem; color:rgba(255,255,255,.4); margin-bottom:22px; }
+
+    /* admin form fields */
+    .afl { display:block; font-size:0.68rem; font-weight:600; letter-spacing:.09em; text-transform:uppercase; color:rgba(255,255,255,.4); margin-bottom:6px; }
+    .afi { width:100%; font-family:'Inter',sans-serif; padding:10px 14px; border:1.5px solid rgba(255,255,255,.12); border-radius:10px; font-size:0.9rem; background:rgba(255,255,255,.07); color:#fff; outline:none; transition:border-color .2s; }
+    .afi:focus { border-color:var(--admin-acc); }
+    .afi::placeholder { color:rgba(255,255,255,.25); }
+
+    /* members table */
+    .member-table { width:100%; border-collapse:collapse; }
+    .member-table th { text-align:left; font-size:0.68rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:rgba(255,255,255,.35); padding:8px 12px; border-bottom:1px solid rgba(255,255,255,.1); }
+    .member-table td { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.06); font-size:0.88rem; color:rgba(255,255,255,.8); vertical-align:middle; }
+    .member-table tr:last-child td { border-bottom:none; }
+    .member-table tr:hover td { background:rgba(255,255,255,.03); }
+    .member-count-badge { display:inline-block; background:rgba(59,142,202,.2); color:var(--admin-acc); font-size:0.72rem; font-weight:700; padding:2px 10px; border-radius:10px; margin-left:8px; }
+
+    /* action buttons row */
+    .action-row { display:flex; gap:10px; flex-wrap:wrap; }
+    .btn-act { font-family:'Inter',sans-serif; display:inline-flex; align-items:center; gap:7px; padding:10px 20px; border-radius:10px; font-size:0.85rem; font-weight:600; cursor:pointer; border:none; transition:all .15s; text-decoration:none; }
+    .btn-act-blue { background:var(--admin-acc); color:#fff; }
+    .btn-act-blue:hover { background:#2E7AB8; }
+    .btn-act-green { background:#1E7A4A; color:#fff; }
+    .btn-act-green:hover { background:#166040; }
+    .btn-act-outline { background:transparent; color:rgba(255,255,255,.7); border:1.5px solid rgba(255,255,255,.2); }
+    .btn-act-outline:hover { border-color:rgba(255,255,255,.5); color:#fff; }
+    .btn-act-danger { background:transparent; color:#FF8888; border:1.5px solid rgba(255,80,80,.3); }
+    .btn-act-danger:hover { background:rgba(255,80,80,.1); }
+    .btn-act-sm { padding:5px 12px; font-size:0.75rem; }
+
+    .toast { position:fixed; bottom:28px; right:28px; background:var(--dark); color:#fff; padding:12px 22px; border-radius:10px; font-size:0.85rem; font-weight:500; z-index:999; transform:translateY(80px); opacity:0; transition:all .3s; pointer-events:none; }
+    .toast.show { transform:translateY(0); opacity:1; }
+
+    /* ── SORT CONTROLS ── */
+    .sort-bar { display:flex; align-items:center; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+    .sort-label { font-size:0.72rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-right:4px; }
+    .sort-btn {
+      font-family:'Inter',sans-serif; font-size:0.78rem; font-weight:500;
+      padding:6px 14px; border-radius:20px; border:1.5px solid var(--border);
+      background:var(--warm-white); color:var(--muted); cursor:pointer;
+      transition:all .15s; display:inline-flex; align-items:center; gap:5px;
+    }
+    .sort-btn:hover { border-color:var(--pink); color:var(--pink); }
+    .sort-btn.active { background:var(--pink); border-color:var(--pink); color:#fff; }
+
+    /* ── DATE POLL (public) ── */
+    #poll-section { background:var(--blush); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+    .poll-dates-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin-bottom:28px; }
+    .poll-date-card {
+      background:var(--warm-white); border:2px solid var(--border); border-radius:14px;
+      padding:18px 14px; text-align:center; cursor:pointer;
+      transition:all .15s; user-select:none;
+    }
+    .poll-date-card:hover { border-color:var(--pink); background:var(--pink-lt); }
+    .poll-date-card.selected { border-color:var(--green); background:var(--green-lt); }
+    .poll-date-card.selected .pdc-check { opacity:1; }
+    .pdc-check { font-size:1.1rem; margin-bottom:6px; opacity:0; transition:opacity .15s; }
+    .pdc-label { font-size:0.85rem; font-weight:600; color:var(--dark); line-height:1.3; }
+    .pdc-sub { font-size:0.72rem; color:var(--muted); margin-top:3px; }
+    .poll-form-row { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
+    .poll-name-wrap { flex:1; min-width:180px; }
+    .poll-submitted { background:var(--green-lt); border:1px solid #A8DEC0; border-radius:14px; padding:22px 24px; text-align:center; display:none; }
+    .poll-submitted h4 { font-family:'DM Serif Display',serif; font-size:1.2rem; color:var(--green); margin-bottom:6px; }
+    .poll-submitted p { font-size:0.85rem; color:#2A6A4A; }
+
+    /* poll results (public, optional) */
+    .poll-results-grid { display:flex; flex-direction:column; gap:10px; margin-top:28px; }
+    .poll-result-row { display:flex; align-items:center; gap:14px; }
+    .poll-result-date { font-size:0.85rem; font-weight:600; color:var(--dark); width:160px; flex-shrink:0; }
+    .poll-result-bar-wrap { flex:1; }
+    .poll-result-bar-bg { background:var(--border); border-radius:4px; height:28px; position:relative; overflow:hidden; }
+    .poll-result-bar-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--pink),var(--coral)); transition:width .4s; display:flex; align-items:center; padding-left:10px; }
+    .poll-result-bar-fill.winner { background:linear-gradient(90deg,var(--green),#5EBD8A); }
+    .poll-result-bar-count { font-size:0.78rem; font-weight:700; color:#fff; white-space:nowrap; }
+    .poll-result-names { font-size:0.72rem; color:var(--muted); margin-top:3px; }
+    .winner-badge { display:inline-flex; align-items:center; gap:4px; background:var(--green-lt); color:var(--green); font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:6px; margin-left:8px; }
+
+    /* ── ADMIN POLL TAB ── */
+    .poll-date-inputs { display:flex; flex-direction:column; gap:10px; margin-bottom:18px; }
+    .poll-date-input-row { display:flex; gap:8px; align-items:center; }
+    .poll-date-input-row .afi { flex:1; }
+    .poll-toggle { display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+    .toggle-switch { position:relative; width:42px; height:24px; flex-shrink:0; }
+    .toggle-switch input { opacity:0; width:0; height:0; }
+    .toggle-slider { position:absolute; inset:0; background:#444; border-radius:12px; cursor:pointer; transition:.2s; }
+    .toggle-slider::before { content:''; position:absolute; width:18px; height:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.2s; }
+    input:checked + .toggle-slider { background:var(--admin-acc); }
+    input:checked + .toggle-slider::before { transform:translateX(18px); }
+    .toggle-label { font-size:0.82rem; color:rgba(255,255,255,.6); }
+
+    .admin-result-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.07); }
+    .admin-result-date { font-size:0.85rem; color:#fff; width:160px; flex-shrink:0; font-weight:500; }
+    .admin-result-bar-bg { flex:1; background:rgba(255,255,255,.1); border-radius:4px; height:24px; overflow:hidden; position:relative; }
+    .admin-result-bar-fill { height:100%; border-radius:4px; background:var(--admin-acc); transition:width .4s; display:flex; align-items:center; padding-left:10px; min-width:0; }
+    .admin-result-bar-fill.winner { background:linear-gradient(90deg,#1E7A4A,#3ABD78); }
+    .admin-result-count { font-size:0.78rem; font-weight:700; color:#fff; white-space:nowrap; }
+    .admin-result-names-list { font-size:0.72rem; color:rgba(255,255,255,.4); margin-top:2px; }
+    .admin-use-date-btn { font-size:0.72rem; }
+
+    /* ── FOOTER ── */
+    footer { background:var(--dark); color:rgba(255,255,255,.5); text-align:center; padding:36px 20px; font-size:0.8rem; font-weight:500; line-height:2; }
+    footer strong { color:rgba(255,255,255,.8); }
+
+    /* ── MEMBER CARDS (clickable) ── */
+    .member-card { cursor:pointer; }
+    .member-card .m-tap-hint { font-size:0.62rem; color:var(--muted); margin-top:6px; opacity:0; transition:opacity .15s; }
+    .member-card:hover .m-tap-hint { opacity:1; }
+
+    /* ── PROFILE MODAL ── */
+    .profile-modal-overlay {
+      position:fixed; inset:0; background:rgba(28,20,16,.55); backdrop-filter:blur(4px);
+      z-index:500; display:flex; align-items:center; justify-content:center;
+      padding:24px; opacity:0; pointer-events:none; transition:opacity .22s;
+    }
+    .profile-modal-overlay.open { opacity:1; pointer-events:all; }
+    .profile-modal-card {
+      background:var(--warm-white); border:1px solid var(--border); border-radius:24px;
+      width:100%; max-width:500px; max-height:88vh; overflow-y:auto;
+      box-shadow:0 24px 80px rgba(28,20,16,.22); padding:36px;
+      transform:translateY(16px) scale(.98); transition:transform .22s;
+      position:relative;
+    }
+    .profile-modal-overlay.open .profile-modal-card { transform:translateY(0) scale(1); }
+    .profile-close {
+      position:absolute; top:18px; right:18px; background:var(--border);
+      border:none; border-radius:50%; width:32px; height:32px; font-size:0.85rem;
+      color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center;
+      transition:background .15s;
+    }
+    .profile-close:hover { background:var(--pink-lt); color:var(--pink); }
+    .profile-top { display:flex; align-items:center; gap:20px; margin-bottom:28px; }
+    .profile-photo-lg {
+      width:72px; height:72px; border-radius:50%; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-family:'DM Serif Display',serif; font-size:1.6rem; color:#fff;
+      overflow:hidden;
+    }
+    .profile-photo-lg img { width:100%; height:100%; object-fit:cover; }
+    .profile-name-block { flex:1; min-width:0; }
+    .profile-modal-name { font-family:'DM Serif Display',serif; font-size:1.4rem; color:var(--dark); line-height:1.2; margin-bottom:6px; }
+    .profile-modal-status { display:inline-block; font-size:0.7rem; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:6px; }
+    .profile-modal-joined { font-size:0.76rem; color:var(--muted); }
+    .profile-fields { display:flex; flex-direction:column; gap:16px; }
+    .profile-field { background:var(--cream); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }
+    .profile-field-label { font-size:0.65rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
+    .profile-field-value { font-size:0.9rem; color:var(--text); line-height:1.5; }
+    .profile-empty-state { text-align:center; padding:24px 0 8px; color:var(--muted); font-size:0.88rem; font-style:italic; }
+
+    /* ── ADMIN PROFILE EDIT MODAL ── */
+    .admin-modal-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,.65); backdrop-filter:blur(3px);
+      z-index:600; display:flex; align-items:center; justify-content:center;
+      padding:24px; opacity:0; pointer-events:none; transition:opacity .2s;
+    }
+    .admin-modal-overlay.open { opacity:1; pointer-events:all; }
+    .admin-modal-card {
+      background:#1A2535; border:1px solid rgba(255,255,255,.12); border-radius:20px;
+      width:100%; max-width:560px; max-height:88vh; overflow-y:auto;
+      box-shadow:0 24px 80px rgba(0,0,0,.5); padding:32px; position:relative;
+      transform:translateY(12px); transition:transform .2s;
+    }
+    .admin-modal-overlay.open .admin-modal-card { transform:translateY(0); }
+    .admin-modal-close {
+      position:absolute; top:16px; right:16px; background:rgba(255,255,255,.08);
+      border:none; border-radius:50%; width:30px; height:30px; font-size:0.8rem;
+      color:rgba(255,255,255,.5); cursor:pointer; display:flex; align-items:center; justify-content:center;
+      transition:background .15s;
+    }
+    .admin-modal-close:hover { background:rgba(255,255,255,.15); color:#fff; }
+    #apm-photo-preview img { width:100%; height:100%; object-fit:cover; }
+    .admin-modal-title { font-family:'DM Serif Display',serif; font-size:1.3rem; color:#fff; margin-bottom:4px; }
+    .admin-modal-sub { font-size:0.82rem; color:rgba(255,255,255,.4); margin-bottom:24px; }
+
+    /* ── PHOTO CROP OVERLAY ── */
+    .crop-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,.8); backdrop-filter:blur(6px);
+      z-index:700; display:flex; align-items:center; justify-content:center;
+      padding:24px; opacity:0; pointer-events:none; transition:opacity .2s;
+    }
+    .crop-overlay.open { opacity:1; pointer-events:all; }
+    .crop-card {
+      background:#1A2535; border:1px solid rgba(255,255,255,.15); border-radius:20px;
+      padding:28px; width:100%; max-width:320px; text-align:center;
+    }
+    .crop-card h4 { font-family:'DM Serif Display',serif; font-size:1.2rem; color:#fff; margin-bottom:4px; }
+    .crop-card p  { font-size:0.78rem; color:rgba(255,255,255,.4); margin-bottom:20px; }
+    #crop-canvas  {
+      border-radius:50%; display:block; margin:0 auto 18px; cursor:grab;
+      touch-action:none; box-shadow:0 0 0 3px rgba(59,142,202,.6);
+    }
+    #crop-canvas:active { cursor:grabbing; }
+    .crop-zoom-row { display:flex; align-items:center; gap:10px; margin-bottom:20px; }
+    .crop-zoom-icon { font-size:0.85rem; color:rgba(255,255,255,.4); flex-shrink:0; }
+    #crop-zoom {
+      flex:1; -webkit-appearance:none; appearance:none; height:4px;
+      background:rgba(255,255,255,.15); border-radius:2px; outline:none; cursor:pointer;
+    }
+    #crop-zoom::-webkit-slider-thumb {
+      -webkit-appearance:none; width:18px; height:18px; border-radius:50%;
+      background:var(--admin-acc); cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.3);
+    }
+    .crop-btns { display:flex; gap:10px; justify-content:center; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width:760px) {
+      .hero-inner { grid-template-columns:1fr; gap:40px; }
+      .stats-row { grid-template-columns:1fr 1fr; }
+      .form-row,.form-row-3 { grid-template-columns:1fr; }
+      .gate-form { flex-direction:column; }
+      .community-card { flex-direction:column; }
+      .nav-inner ul { display:none; }
+      .admin-tabs { gap:2px; }
+      .profile-top { flex-direction:column; text-align:center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">Book <span>Club</span></a>
+    <ul>
+      <li><a href="#meeting">Next Meeting</a></li>
+      <li><a href="#books">Our Books</a></li>
+      <li><a href="#members">Members</a></li>
+      <li><a href="#admin-area" style="color:#6AAADD;">⚙ Organizer</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ── HERO / NEXT MEETING ── -->
+<div class="hero" id="meeting">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <div class="hero-eyebrow">Est. June 2023 · Los Angeles</div>
+      <h1>Our kind of<br><em>happy hour.</em></h1>
+      <p class="hero-desc">A book club that actually finishes the books (most of the time). We meet every couple of months to eat, drink, recap, and rate!</p>
+      <div class="hero-pills">
+        <div class="hero-pill"><strong id="pill-count">17</strong> books read</div>
+        <div class="hero-pill">avg <strong id="pill-avg">3.28</strong> / 5</div>
+        <div class="hero-pill"><strong id="pill-members">22</strong> members</div>
+      </div>
+    </div>
+    <div class="hero-book">
+      <div class="hero-book-card">
+        <div class="cover-img-wrap">
+          <img id="cover-img" src="https://covers.openlibrary.org/b/isbn/9780802165176-L.jpg"
+               alt="Current book cover"
+               onerror="this.style.display='none';document.getElementById('cover-fb').style.display='flex';" />
+          <div id="cover-fb" class="cover-fallback" style="display:none;"></div>
+        </div>
+        <div class="hero-book-info">
+          <div class="hero-book-label">📅 Next Meeting</div>
+          <div class="hero-book-title" id="meeting-book-title">Heart the Lover</div>
+          <div class="hero-book-author" id="meeting-book-author">by Lily King</div>
+          <div class="mdl-list">
+            <div class="mdl-item">
+              <svg class="mdl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span id="meeting-date">Tue, April 14, 2026</span>
+            </div>
+            <div class="mdl-item">
+              <svg class="mdl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span id="meeting-time">7:00 – 9:00 PM</span>
+            </div>
+          </div>
+          <div class="rsvp-mini" id="rsvp-row"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── BOOKS ── -->
+<div id="books">
+  <div class="section">
+    <div class="page">
+      <div class="section-head">
+        <div class="section-title">Books We've Read</div>
+        <div class="section-sub">Every pick, ranked by our group rating</div>
+        <div class="section-rule"></div>
+      </div>
+      <div class="stats-row" id="stats-row"></div>
+      <div class="sort-bar">
+        <span class="sort-label">Sort by</span>
+        <button class="sort-btn active" id="sort-btn-date-desc" onclick="setSort('date-desc')">📅 Recently read</button>
+        <button class="sort-btn" id="sort-btn-date-asc" onclick="setSort('date-asc')">📅 Oldest first</button>
+        <button class="sort-btn" id="sort-btn-score-desc" onclick="setSort('score-desc')">⭐ Highest rated</button>
+        <button class="sort-btn" id="sort-btn-score-asc" onclick="setSort('score-asc')">⭐ Lowest rated</button>
+      </div>
+      <div class="books-container" id="books-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MEMBERS ── -->
+<div id="members">
+  <div class="section">
+    <div class="page">
+      <div class="section-head">
+        <div class="section-title">Members</div>
+        <div class="section-sub">Password required — members only</div>
+        <div class="section-rule"></div>
+      </div>
+      <div id="members-gate" class="gate-outer">
+        <div class="gate-card">
+          <span class="gate-icon">🔐</span>
+          <h3>Members Only</h3>
+          <p>Enter the password to view the member list, recommend a book, or unsubscribe.</p>
+          <div class="gate-form">
+            <input class="gate-input" type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter') checkMemberPw()" />
+            <button class="gate-btn" onclick="checkMemberPw()">Enter</button>
+          </div>
+          <p class="gate-err" id="pw-err">Wrong password — try again?</p>
+        </div>
+      </div>
+      <div id="members-content">
+        <div class="members-grid" id="members-grid"></div>
+
+        <!-- WhatsApp — members only -->
+        <div class="community-card" style="margin-bottom:24px;">
+          <div>
+            <h3>Group Chat 💬</h3>
+            <p>We chat, share recs, and send memes between meetings in our WhatsApp group.</p>
+          </div>
+          <a href="https://chat.whatsapp.com/REPLACE_WITH_YOUR_INVITE_LINK" class="wa-btn" target="_blank" rel="noopener">
+            <svg class="wa-svg" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.558 4.122 1.533 5.856L.057 23.776a.5.5 0 00.608.637l6.109-1.599A11.953 11.953 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.796 9.796 0 01-4.997-1.369l-.358-.213-3.712.972.988-3.612-.233-.37A9.818 9.818 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
+            Join our WhatsApp
+          </a>
+        </div>
+
+        <!-- Date Poll — members only, only shown when active -->
+        <div id="poll-section" style="display:none; margin-bottom:24px;">
+          <div class="form-card" style="margin-bottom:0;">
+            <h3 id="poll-public-title" style="margin-bottom:4px;">When's everyone free?</h3>
+            <p class="form-sub">Pick every date that works for you.</p>
+            <div id="poll-vote-form">
+              <div class="poll-dates-grid" id="poll-dates-grid"></div>
+              <div class="poll-form-row">
+                <div class="poll-name-wrap">
+                  <label class="fl">Your Name</label>
+                  <input class="fi" type="text" id="poll-voter-name" placeholder="e.g. Sarah" />
+                </div>
+                <button class="btn btn-pink" onclick="submitPollVote()" style="height:42px;">Submit Availability</button>
+              </div>
+              <p style="font-size:0.75rem;color:var(--muted);margin-top:10px;">Submitting opens a pre-filled email to Corey — just hit send!</p>
+            </div>
+            <div class="poll-submitted" id="poll-submitted-msg">
+              <h4>✓ Thanks!</h4>
+              <p>Your availability has been sent to Corey. She'll confirm the date soon.</p>
+            </div>
+            <div id="poll-public-results" style="display:none; margin-top:24px;">
+              <div style="font-size:0.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;">Current Standings</div>
+              <div class="poll-results-grid" id="poll-results-public"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <h3>📬 Recommend a Book</h3>
+          <p class="form-sub">Have a great read in mind for the group? Drop it here.</p>
+          <form id="rec-form" onsubmit="sendRec(event)">
+            <div class="form-row">
+              <div class="fg"><label class="fl">Book Title *</label><input class="fi" type="text" id="rec-title" placeholder="e.g. The Midnight Library" required /></div>
+              <div class="fg"><label class="fl">Author</label><input class="fi" type="text" id="rec-author" placeholder="e.g. Matt Haig" /></div>
+            </div>
+            <div class="fg"><label class="fl">Your Name</label><input class="fi" type="text" id="rec-name" placeholder="Who's recommending?" /></div>
+            <div class="fg"><label class="fl">Your Pitch</label><textarea class="fta" id="rec-why" placeholder="Why should we read it?"></textarea></div>
+            <button type="submit" class="btn btn-pink">Send Recommendation ✉️</button>
+          </form>
+        </div>
+        <div class="unsub-bar">
+          <p>Need to step away for a while? No hard feelings — you can remove yourself from emails and invites.</p>
+          <a id="unsub-link" href="#" class="unsub-link" onclick="handleUnsub(event)">Unsubscribe</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADMIN PANEL ── -->
+<div id="admin-area">
+  <div class="admin-inner">
+    <div class="admin-header">
+      <div class="admin-badge">⚙ Organizer Panel</div>
+      <div class="admin-title">Manage Book Club</div>
+      <div class="admin-sub">Add members, send emails, update meetings, log books, and send calendar invites.</div>
+    </div>
+
+    <!-- Admin Gate -->
+    <div id="admin-gate">
+      <div class="admin-gate-card">
+        <span class="gate-icon">🗝️</span>
+        <h3>Organizer Access</h3>
+        <p>This area is just for you, Corey. Enter your organizer password.</p>
+        <div class="gate-form" style="gap:8px;">
+          <input class="admin-input" type="password" id="admin-pw" placeholder="Organizer password" onkeydown="if(event.key==='Enter') checkAdminPw()" />
+          <button class="btn-admin" onclick="checkAdminPw()">Enter</button>
+        </div>
+        <p class="admin-gate-err" id="admin-pw-err">Wrong password — try again?</p>
+      </div>
+    </div>
+
+    <!-- Admin Content -->
+    <div id="admin-content">
+      <div class="admin-tabs">
+        <button class="admin-tab active" onclick="showTab('tab-members',this)">👥 Members</button>
+        <button class="admin-tab" onclick="showTab('tab-email',this)">✉️ Email Group</button>
+        <button class="admin-tab" onclick="showTab('tab-meeting',this)">📅 Next Meeting</button>
+        <button class="admin-tab" onclick="showTab('tab-books',this)">📚 Add Book</button>
+        <button class="admin-tab" onclick="showTab('tab-poll',this)">📊 Date Poll</button>
+      </div>
+
+      <!-- TAB: MEMBERS -->
+      <div id="tab-members" class="admin-panel active">
+        <div class="admin-card">
+          <h4>Add New Member</h4>
+          <p class="admin-card-sub">They'll appear in the members list and be included in group emails and calendar invites.</p>
+          <div class="form-row" style="margin-bottom:16px;">
+            <div class="fg"><label class="afl">Full Name</label><input class="afi" type="text" id="new-member-name" placeholder="Jane Smith" /></div>
+            <div class="fg"><label class="afl">Email Address</label><input class="afi" type="email" id="new-member-email" placeholder="jane@example.com" /></div>
+          </div>
+          <button class="btn-act btn-act-blue" onclick="addMember()">+ Add Member</button>
+        </div>
+
+        <div class="admin-card">
+          <h4>Member List <span class="member-count-badge" id="admin-member-count">0</span></h4>
+          <p class="admin-card-sub">Remove anyone who wants to unsubscribe or step back.</p>
+          <div style="overflow-x:auto;">
+            <table class="member-table" id="admin-member-table">
+              <thead><tr><th>Name</th><th>Email</th><th>Added</th><th>Actions</th></tr></thead>
+              <tbody id="admin-member-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: EMAIL -->
+      <div id="tab-email" class="admin-panel">
+        <div class="admin-card">
+          <h4>Email Everyone</h4>
+          <p class="admin-card-sub">Opens Gmail with all members pre-loaded. Choose a template or write your own.</p>
+          <div class="action-row" style="margin-bottom:24px;">
+            <button class="btn-act btn-act-blue" onclick="emailAll('announcement')">📣 Announcement</button>
+            <button class="btn-act btn-act-blue" onclick="emailAll('reminder')">⏰ Meeting Reminder</button>
+            <button class="btn-act btn-act-blue" onclick="emailAll('blank')">✏️ Blank Email</button>
+            <button class="btn-act btn-act-outline" onclick="copyAllEmails()">📋 Copy All Emails</button>
+          </div>
+          <div class="fg"><label class="afl">All member emails (for manual use)</label><textarea class="afi" id="email-list-display" style="min-height:80px;font-size:0.78rem;" readonly></textarea></div>
+        </div>
+      </div>
+
+      <!-- TAB: NEXT MEETING -->
+      <div id="tab-meeting" class="admin-panel">
+        <div class="admin-card">
+          <h4>Update Next Meeting</h4>
+          <p class="admin-card-sub">Changes appear instantly on the homepage. The cover loads automatically from Open Library using the ISBN.</p>
+          <div class="form-row" style="margin-bottom:0;">
+            <div class="fg"><label class="afl">Book Title</label><input class="afi" type="text" id="m-title" /></div>
+            <div class="fg"><label class="afl">Author</label><input class="afi" type="text" id="m-author" /></div>
+          </div>
+          <div class="fg"><label class="afl">Cover ISBN (for auto cover image)</label><input class="afi" type="text" id="m-isbn" placeholder="e.g. 9780802165176" /></div>
+          <div class="form-row-3" style="margin-bottom:0;">
+            <div class="fg"><label class="afl">Date (e.g. Tue, June 10, 2026)</label><input class="afi" type="text" id="m-date" /></div>
+            <div class="fg"><label class="afl">Time</label><input class="afi" type="text" id="m-time" placeholder="7:00 – 9:00 PM" /></div>
+            <div class="fg"><label class="afl">Location</label><input class="afi" type="text" id="m-location" /></div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-act btn-act-blue" onclick="saveMeeting()">💾 Save & Update Homepage</button>
+            <button class="btn-act btn-act-green" onclick="sendCalendarInvite()">📅 Send Calendar Invite to All</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: ADD BOOK -->
+      <div id="tab-books" class="admin-panel">
+        <div class="admin-card">
+          <h4>Log a Completed Book</h4>
+          <p class="admin-card-sub">Add a book you just finished. It'll appear at the top of the reading list on the homepage.</p>
+          <div class="form-row">
+            <div class="fg"><label class="afl">Book Title</label><input class="afi" type="text" id="b-title" placeholder="e.g. The Covenant of Water" /></div>
+            <div class="fg"><label class="afl">Date Read (e.g. Apr 2026)</label><input class="afi" type="text" id="b-date" placeholder="Apr 2026" /></div>
+          </div>
+          <div class="fg" style="max-width:200px;"><label class="afl">Average Rating (0–5)</label><input class="afi" type="number" id="b-rating" min="0" max="5" step="0.01" placeholder="3.85" /></div>
+          <button class="btn-act btn-act-blue" onclick="addBook()">+ Add to Reading List</button>
+        </div>
+
+        <div class="admin-card">
+          <h4>Reading History</h4>
+          <p class="admin-card-sub">All logged books — most recent first. You can remove any entry.</p>
+          <div id="admin-books-list" style="display:flex;flex-direction:column;gap:0;"></div>
+        </div>
+      </div>
+
+      <!-- TAB: DATE POLL -->
+      <div id="tab-poll" class="admin-panel">
+
+        <!-- Setup -->
+        <div class="admin-card">
+          <h4>Set Up a Date Poll</h4>
+          <p class="admin-card-sub">Enter up to 6 candidate dates. When you activate the poll, it appears on the public site for members to vote on.</p>
+          <div class="fg"><label class="afl">Poll Title (optional)</label><input class="afi" type="text" id="poll-title-input" placeholder="e.g. Picking our next meeting date!" /></div>
+          <div class="poll-date-inputs" id="poll-date-inputs">
+            <div class="poll-date-input-row"><input class="afi" type="text" placeholder="Date option 1 (e.g. Thu, May 8)" /><button class="btn-act btn-act-danger btn-act-sm" onclick="removeDateInput(this)">✕</button></div>
+            <div class="poll-date-input-row"><input class="afi" type="text" placeholder="Date option 2 (e.g. Sat, May 10)" /><button class="btn-act btn-act-danger btn-act-sm" onclick="removeDateInput(this)">✕</button></div>
+            <div class="poll-date-input-row"><input class="afi" type="text" placeholder="Date option 3 (e.g. Thu, May 15)" /><button class="btn-act btn-act-danger btn-act-sm" onclick="removeDateInput(this)">✕</button></div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;">
+            <button class="btn-act btn-act-outline" onclick="addDateInput()" id="add-date-btn">+ Add Another Date</button>
+          </div>
+          <div class="poll-toggle">
+            <label class="toggle-switch"><input type="checkbox" id="poll-show-results-toggle"><span class="toggle-slider"></span></label>
+            <span class="toggle-label">Show live results to members on the site</span>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-act btn-act-blue" onclick="activatePoll()">✓ Activate Poll</button>
+            <button class="btn-act btn-act-outline" onclick="deactivatePoll()" id="deactivate-poll-btn" style="display:none;">✕ Deactivate &amp; Clear</button>
+            <a href="https://doodle.com/create" target="_blank" class="btn-act btn-act-outline">↗ Use Doodle Instead</a>
+          </div>
+        </div>
+
+        <!-- Record a Vote -->
+        <div class="admin-card" id="poll-record-card" style="display:none;">
+          <h4>Record a Vote</h4>
+          <p class="admin-card-sub">When you get an availability email from a member, record it here. Takes 10 seconds.</p>
+          <div class="fg"><label class="afl">Member Name</label><input class="afi" type="text" id="record-vote-name" placeholder="e.g. Sarah" /></div>
+          <div style="margin-bottom:18px;">
+            <label class="afl" style="margin-bottom:10px;">Available On</label>
+            <div id="record-vote-dates" style="display:flex;flex-direction:column;gap:8px;"></div>
+          </div>
+          <button class="btn-act btn-act-blue" onclick="recordAdminVote()">✓ Record This Vote</button>
+        </div>
+
+        <!-- Results -->
+        <div class="admin-card" id="poll-results-card" style="display:none;">
+          <h4>Results <span id="poll-total-votes" class="member-count-badge">0 votes</span></h4>
+          <p class="admin-card-sub">The date with the most ✓s wins. Click "Use This Date" to pre-fill the Next Meeting form.</p>
+          <div id="admin-poll-results-list" style="margin-top:8px;"></div>
+          <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.1);">
+            <button class="btn-act btn-act-danger" onclick="clearAllVotes()" style="font-size:0.78rem;">Clear All Votes</button>
+          </div>
+        </div>
+
+      </div><!-- /tab-poll -->
+
+    </div><!-- /admin-content -->
+  </div>
+</div>
+
+<!-- ── PROFILE MODAL ── -->
+<div class="profile-modal-overlay" id="profile-modal" onclick="closeProfileModal(event)">
+  <div class="profile-modal-card">
+    <button class="profile-close" onclick="closeProfileModal()">✕</button>
+    <div class="profile-top">
+      <div class="profile-photo-lg" id="pm-avatar"></div>
+      <div class="profile-name-block">
+        <div class="profile-modal-name" id="pm-name"></div>
+        <span class="profile-modal-status" id="pm-status"></span>
+        <div class="profile-modal-joined" id="pm-joined"></div>
+      </div>
+    </div>
+    <div class="profile-fields" id="pm-fields"></div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);text-align:center;">
+      <button class="btn btn-outline btn-sm" id="pm-edit-btn" onclick="editMyProfile()">✏️ Edit this profile</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADMIN PROFILE EDIT MODAL ── -->
+<div class="admin-modal-overlay" id="admin-profile-modal" onclick="closeAdminProfileModal(event)">
+  <div class="admin-modal-card">
+    <button class="admin-modal-close" onclick="closeAdminProfileModal()">✕</button>
+    <div class="admin-modal-title" id="apm-title">Edit Profile</div>
+    <div class="admin-modal-sub">This info shows when members click on a name in the Members section.</div>
+    <input type="hidden" id="apm-idx" value="" />
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="fg" style="margin-bottom:0;">
+        <label class="afl">Full Name</label>
+        <input class="afi" type="text" id="apm-name" placeholder="e.g. Jane Smith" />
+      </div>
+      <div class="fg" style="margin-bottom:0;">
+        <label class="afl">Email Address</label>
+        <input class="afi" type="email" id="apm-email" placeholder="e.g. jane@example.com" />
+      </div>
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,.1);margin:18px 0 14px;"></div>
+    <div class="fg">
+      <label class="afl">Profile Photo <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></label>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;">
+        <div id="apm-photo-preview" style="width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.1);border:2px dashed rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;overflow:hidden;">📷</div>
+        <div style="flex:1;">
+          <label style="display:inline-flex;align-items:center;gap:8px;background:var(--admin-acc);color:#fff;padding:9px 18px;border-radius:10px;font-size:0.84rem;font-weight:600;cursor:pointer;transition:background .15s;">
+            <span>📁 Choose Photo</span>
+            <input type="file" id="apm-photo-file" accept="image/*" style="display:none;" onchange="handlePhotoUpload(this)" />
+          </label>
+          <div style="font-size:0.72rem;color:rgba(255,255,255,.35);margin-top:6px;">JPG, PNG, HEIC · auto-resized · stored on this device</div>
+        </div>
+        <button id="apm-photo-clear" onclick="clearPhoto()" style="display:none;background:transparent;border:1px solid rgba(255,80,80,.4);color:#FF8888;border-radius:8px;padding:6px 12px;font-size:0.75rem;cursor:pointer;white-space:nowrap;">✕ Remove</button>
+      </div>
+      <input type="hidden" id="apm-photo" />
+    </div>
+    <div class="fg">
+      <label class="afl">What I do for work</label>
+      <input class="afi" type="text" id="apm-job" placeholder="e.g. I'm a nurse, I work in marketing..." />
+    </div>
+    <div class="fg">
+      <label class="afl">My family & life</label>
+      <input class="afi" type="text" id="apm-family" placeholder="e.g. Married with two kids, have a golden retriever..." />
+    </div>
+    <div class="fg">
+      <label class="afl">How I found book club</label>
+      <input class="afi" type="text" id="apm-how" placeholder="e.g. Friends with Corey, we met at yoga..." />
+    </div>
+    <div class="fg">
+      <label class="afl">My favorite book</label>
+      <input class="afi" type="text" id="apm-favbook" placeholder="e.g. A Little Life" />
+    </div>
+    <div class="fg">
+      <label class="afl">My favorite genre</label>
+      <input class="afi" type="text" id="apm-favgenre" placeholder="e.g. Literary fiction, thrillers..." />
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn-act btn-act-blue" onclick="saveAdminProfile()">💾 Save Profile</button>
+      <button class="btn-act btn-act-outline" onclick="closeAdminProfileModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── PHOTO CROP OVERLAY ── -->
+<div class="crop-overlay" id="photo-crop-overlay">
+  <div class="crop-card">
+    <h4>Position your photo</h4>
+    <p>Drag to reposition · Slider to zoom</p>
+    <canvas id="crop-canvas" width="240" height="240"></canvas>
+    <div class="crop-zoom-row">
+      <span class="crop-zoom-icon">🔍−</span>
+      <input type="range" id="crop-zoom" min="0.5" max="3" step="0.01" value="1" oninput="onCropZoom(this.value)" />
+      <span class="crop-zoom-icon">🔍+</span>
+    </div>
+    <div class="crop-btns">
+      <button class="btn-act btn-act-blue" onclick="confirmCrop()">✓ Use this photo</button>
+      <button class="btn-act btn-act-outline" onclick="cancelCrop()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div><strong>Book Club</strong> · Los Angeles, CA</div>
+  <div>Est. June 2023</div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<script>
+// ════════════════════════════════════════════════════════════════
+//  PASSWORDS  (change these!)
+// ════════════════════════════════════════════════════════════════
+const MEMBER_PW = "bookclub";   // shared with all members
+const ADMIN_PW  = "organizer";  // just for you, Corey
+
+// ════════════════════════════════════════════════════════════════
+//  DEFAULT DATA
+// ════════════════════════════════════════════════════════════════
+const EMPTY_PROFILE = { photo:"", job:"", family:"", how_heard:"", fav_book:"", fav_genre:"" };
+
+const DEFAULT_MEMBERS = [
+  { name:"Corey Carrier",      email:"corey.fink@gmail.com",         joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Stacy Lynn",         email:"stacylynn431@gmail.com",        joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Michelle Landver",   email:"michellelandver@gmail.com",     joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Samantha Mansfield", email:"samanthalmansfield@gmail.com",  joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Jen Gal",            email:"jenniferchristi@gmail.com",     joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Alexis Potter",      email:"apotter.177@gmail.com",         joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Allison Berens",     email:"allisonberens1@gmail.com",      joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Marta Topran",       email:"marta.topran@gmail.com",        joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Lesley Olenik",      email:"lesleyolenik@livenation.com",   joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Anna Plumley",       email:"annaplumley@livenation.com",    joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Efrat Poulson",      email:"efratpoulson@gmail.com",        joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Ashley Tinnes",      email:"ashleytinnes@gmail.com",        joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Rachel Hazlehurst",  email:"rachel.hazlehurst@gmail.com",   joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Sarah Bassinson",    email:"sbassinson@gmail.com",          joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Lindsay Powell",     email:"lindsay.levitt@gmail.com",      joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Pac Carrier",        email:"packey.carrier@gmail.com",      joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Kelly Paige",        email:"kmpaige4@gmail.com",            joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Dylan Moore",        email:"dylancmoore@gmail.com",         joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Julia Carvalho",     email:"juliacar@gmail.com",            joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Rachel Radford",     email:"rradford77@gmail.com",          joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Jesse Lerner",       email:"jessemlerner@gmail.com",        joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Kellie Q",           email:"kelliequ@gmail.com",            joined:"Jun 2023", profile:{...EMPTY_PROFILE} },
+  { name:"Celia Meagher",      email:"celia.tanya@gmail.com",         joined:"Apr 2026", profile:{...EMPTY_PROFILE} },
+];
+
+const DEFAULT_MEETING = {
+  book:"Heart the Lover", author:"Lily King", isbn:"9780802165176",
+  date:"Tue, April 14, 2026", time:"7:00 – 9:00 PM",
+dateISO:"20260414T190000", dateISOend:"20260414T210000"
+};
+
+const DEFAULT_BOOKS = [
+  { date:"Feb 2026",  title:"Project Hail Mary",                  rating:4.46 },
+  { date:"Dec 2025",  title:"Wedding People",                     rating:3.86 },
+  { date:"Oct 2025",  title:"James",                              rating:3.20 },
+  { date:"Aug 2025",  title:"None of This Is True",               rating:3.01 },
+  { date:"Jun 2025",  title:"The Housemaid",                      rating:3.90 },
+  { date:"Apr 2025",  title:"Intermezzo",                         rating:1.50 },
+  { date:"Jan 2025",  title:"Paper Palace",                       rating:2.90 },
+  { date:"Nov 2024",  title:"God of the Woods",                   rating:3.13 },
+  { date:"Sep 2024",  title:"All Fours",                          rating:3.34 },
+  { date:"Jul 2024",  title:"Dark Matter",                        rating:3.39 },
+  { date:"May 2024",  title:"The Great Alone",                    rating:3.86 },
+  { date:"Mar 2024",  title:"Tom Lake",                           rating:2.84 },
+  { date:"Jan 2024",  title:"Crying in H Mart",                   rating:3.84 },
+  { date:"Nov 2023",  title:"The One",                            rating:2.81 },
+  { date:"Sep 2023",  title:"The Guest",                          rating:2.32 },
+  { date:"Aug 2023",  title:"Mad Honey",                          rating:3.44 },
+  { date:"Jun 2023",  title:"Tomorrow and Tomorrow and Tomorrow",  rating:4.03 },
+];
+
+// ════════════════════════════════════════════════════════════════
+//  DATA (localStorage-backed)
+// ════════════════════════════════════════════════════════════════
+function loadData() {
+  try {
+    const saved = localStorage.getItem('bc_data');
+    if (saved) {
+      const d = JSON.parse(saved);
+      // Migrate: ensure all members have a profile object
+      d.members = d.members.map(m => ({ ...m, profile: m.profile || {...EMPTY_PROFILE} }));
+      return d;
+    }
+  } catch(e) {}
+  return { members: DEFAULT_MEMBERS, meeting: DEFAULT_MEETING, books: DEFAULT_BOOKS };
+}
+
+function saveData() {
+  try { localStorage.setItem('bc_data', JSON.stringify(DATA)); } catch(e) {}
+}
+
+let DATA = loadData();
+
+// ════════════════════════════════════════════════════════════════
+//  RENDER HERO
+// ════════════════════════════════════════════════════════════════
+// RSVP status synced from Google Calendar — "Book Club: Heart the Lover" (Apr 14, 2026)
+// g = accepted, m = tentative/maybe, d = declined, p = no reply
+const RSVP_STATUS = {
+  "corey.fink@gmail.com":          "g",
+  "stacylynn431@gmail.com":        "g",
+  "michellelandver@gmail.com":     "g",
+  "samanthalmansfield@gmail.com":  "g",
+  "jenniferchristi@gmail.com":     "g",
+  "apotter.177@gmail.com":         "g",
+  "allisonberens1@gmail.com":      "g",
+  "marta.topran@gmail.com":        "g",
+  "celia.tanya@gmail.com":         "g",
+  "lesleyolenik@livenation.com":   "m",
+  "annaplumley@livenation.com":    "m",
+  "efratpoulson@gmail.com":        "d",
+  "ashleytinnes@gmail.com":        "p",
+  "rachel.hazlehurst@gmail.com":   "p",
+  "sbassinson@gmail.com":          "p",
+  "lindsay.levitt@gmail.com":      "p",
+  "packey.carrier@gmail.com":      "p",
+  "kmpaige4@gmail.com":            "p",
+  "dylancmoore@gmail.com":         "p",
+  "juliacar@gmail.com":            "p",
+  "rradford77@gmail.com":          "p",
+  "jessemlerner@gmail.com":        "p",
+  "kelliequ@gmail.com":            "p"
+};
+
+function renderHero() {
+  const m = DATA.meeting;
+  document.getElementById('meeting-book-title').textContent = m.book;
+  document.getElementById('meeting-book-author').textContent = 'by ' + m.author;
+  document.getElementById('meeting-date').textContent = m.date;
+  document.getElementById('meeting-time').textContent = m.time;
+
+  const imgEl = document.getElementById('cover-img');
+  const fbEl  = document.getElementById('cover-fb');
+  fbEl.textContent = m.book;
+  if (m.isbn) {
+    imgEl.src = `https://covers.openlibrary.org/b/isbn/${m.isbn}-L.jpg`;
+    imgEl.style.display = 'block';
+    fbEl.style.display  = 'none';
+  } else {
+    imgEl.style.display = 'none';
+    fbEl.style.display  = 'flex';
+  }
+
+  // RSVP counts
+  let g=0, maybe=0, d=0, tbd=0;
+  DATA.members.forEach(mem => {
+    const st = RSVP_STATUS[mem.email.toLowerCase()] || 'p';
+    if (st==='g') g++; else if (st==='m') maybe++; else if (st==='d') d++; else tbd++;
+  });
+  document.getElementById('rsvp-row').innerHTML =
+    (g    ? `<span class="rsvp-chip rc-yes">✓ ${g} going</span>` : '') +
+    (maybe? `<span class="rsvp-chip rc-maybe">~ ${maybe} maybe</span>` : '') +
+    (d    ? `<span class="rsvp-chip rc-no">✗ ${d} no</span>` : '') +
+    (tbd  ? `<span class="rsvp-chip rc-tbd">${tbd} no reply</span>` : '');
+
+  document.getElementById('pill-members').textContent = DATA.members.length;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  SORT + RENDER BOOKS
+// ════════════════════════════════════════════════════════════════
+let currentSort = 'date-desc';
+
+function setSort(mode) {
+  currentSort = mode;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('sort-btn-' + mode);
+  if (btn) btn.classList.add('active');
+  renderBooks();
+}
+
+function getSortedBooks() {
+  const books = [...DATA.books]; // copy so we don't mutate original order
+  if (currentSort === 'date-desc')  return books;             // already newest-first
+  if (currentSort === 'date-asc')   return [...books].reverse();
+  if (currentSort === 'score-desc') return books.sort((a,b) => b.rating - a.rating);
+  if (currentSort === 'score-asc')  return books.sort((a,b) => a.rating - b.rating);
+  return books;
+}
+
+function renderBooks() {
+  const books = DATA.books;
+  const n     = books.length;
+  const avg   = n ? (books.reduce((s,b)=>s+b.rating,0)/n).toFixed(2) : '—';
+  const hi    = n ? Math.max(...books.map(b=>b.rating)) : '—';
+  const lo    = n ? Math.min(...books.map(b=>b.rating)) : '—';
+
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${n}</div><div class="stat-lbl">Books Read</div></div>
+    <div class="stat-card"><div class="stat-num">${avg}</div><div class="stat-lbl">Avg Rating</div></div>
+    <div class="stat-card"><div class="stat-num">${hi}</div><div class="stat-lbl">Highest Rated</div></div>
+    <div class="stat-card"><div class="stat-num">${lo}</div><div class="stat-lbl">Lowest Rated</div></div>`;
+  document.getElementById('pill-count').textContent = n;
+  document.getElementById('pill-avg').textContent = avg;
+
+  const sorted = getSortedBooks();
+  document.getElementById('books-list').innerHTML = sorted.map((b,i) => {
+    const pct  = (b.rating/5*100).toFixed(1);
+    const tier = b.rating>=3.5?'high':b.rating>=2.5?'mid':'low';
+    // Show rank number for score sorts, chronological number for date sorts
+    const rowNum = (currentSort === 'score-desc') ? (i+1)
+                 : (currentSort === 'score-asc')  ? (n-i)
+                 : (currentSort === 'date-asc')   ? (i+1)
+                 : (n-i); // date-desc default
+    return `
+      <div class="book-row">
+        <span class="book-num">${rowNum}</span>
+        <div class="book-swatch sw-${tier}"></div>
+        <div class="book-info">
+          <div class="book-title">${b.title}</div>
+          <div class="book-meta">${b.date}</div>
+        </div>
+        <div class="book-score-col">
+          <div class="score-bar-bg"><div class="score-bar-fill sbf-${tier}" style="width:${pct}%"></div></div>
+          <span class="score-val">${b.rating.toFixed(2)}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════════════
+//  MEMBERS (public view)
+// ════════════════════════════════════════════════════════════════
+const PALETTES = [
+  ["#D14B6A","#E8896A"],["#5A8A50","#8EC085"],["#3A6AAA","#7AABDD"],
+  ["#8A4AAA","#C08ACD"],["#C87830","#E8A860"],["#2A8A8A","#5ABDBD"],
+  ["#AA4A70","#DD8AAA"],["#5A7A2A","#8AB05A"],
+];
+
+function renderPublicMembers() {
+  const lbl = { g:'✓ Going', m:'~ Maybe', d:'✗ Declined', p:'–' };
+  const cls = { g:'ms-g', m:'ms-m', d:'ms-d', p:'ms-p' };
+  document.getElementById('members-grid').innerHTML = DATA.members.map((m,i) => {
+    const init = m.name.split(' ').map(w=>w[0]).slice(0,2).join('');
+    const pal  = PALETTES[i % PALETTES.length];
+    const st   = RSVP_STATUS[m.email.toLowerCase()] || 'p';
+    const p    = m.profile || {};
+    const hasProfile = p.job || p.family || p.how_heard || p.fav_book || p.fav_genre || p.photo;
+    return `
+      <div class="member-card" onclick="openProfileModal(${i})" title="Click to learn more about ${m.name}">
+        ${p.photo
+          ? `<div class="m-avatar" style="background:linear-gradient(135deg,${pal[0]},${pal[1]});overflow:hidden;"><img src="${p.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none'" /></div>`
+          : `<div class="m-avatar" style="background:linear-gradient(135deg,${pal[0]},${pal[1]})">${init}</div>`
+        }
+        <div class="m-name">${m.name}</div>
+        <span class="m-status ${cls[st]}">${lbl[st]}</span>
+        <div class="m-tap-hint">${hasProfile ? '👤 View profile' : 'tap to view'}</div>
+      </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════════════
+//  PASSWORDS
+// ════════════════════════════════════════════════════════════════
+function checkMemberPw() {
+  if (document.getElementById('pw-input').value === MEMBER_PW) {
+    document.getElementById('members-gate').style.display = 'none';
+    document.getElementById('members-content').style.display = 'block';
+    renderPublicMembers();
+    renderPublicPoll();
+  } else {
+    document.getElementById('pw-err').style.display = 'block';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+}
+
+function checkAdminPw() {
+  if (document.getElementById('admin-pw').value === ADMIN_PW) {
+    document.getElementById('admin-gate').style.display    = 'none';
+    document.getElementById('admin-content').style.display = 'block';
+    renderAdminMembers();
+    renderAdminBooks();
+    populateMeetingForm();
+    updateEmailList();
+    restoreAdminPollUI();
+  } else {
+    document.getElementById('admin-pw-err').style.display = 'block';
+    document.getElementById('admin-pw').value = '';
+    document.getElementById('admin-pw').focus();
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  PROFILE MODAL (public)
+// ════════════════════════════════════════════════════════════════
+let _currentProfileIdx = null;
+
+function openProfileModal(idx) {
+  _currentProfileIdx = idx;
+  const m   = DATA.members[idx];
+  const p   = m.profile || {};
+  const st  = RSVP_STATUS[m.email.toLowerCase()] || 'p';
+  const lbl = { g:'✓ Going to next meeting', m:'~ Maybe coming', d:'✗ Declined next meeting', p:'No reply yet' };
+  const cls = { g:'ms-g', m:'ms-m', d:'ms-d', p:'ms-p' };
+  const pal = PALETTES[idx % PALETTES.length];
+  const init = m.name.split(' ').map(w=>w[0]).slice(0,2).join('');
+
+  // Avatar
+  const avatarEl = document.getElementById('pm-avatar');
+  avatarEl.style.background = `linear-gradient(135deg,${pal[0]},${pal[1]})`;
+  if (p.photo) {
+    avatarEl.innerHTML = `<img src="${p.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.innerHTML='${init}';this.style.background='linear-gradient(135deg,${pal[0]},${pal[1]})';" />`;
+  } else {
+    avatarEl.textContent = init;
+  }
+
+  document.getElementById('pm-name').textContent = m.name;
+  const statusEl = document.getElementById('pm-status');
+  statusEl.textContent   = lbl[st];
+  statusEl.className     = `profile-modal-status ${cls[st]}`;
+  document.getElementById('pm-joined').textContent = m.joined ? `Member since ${m.joined}` : '';
+
+  // Fields
+  const fields = [
+    { label:'💼 Work',             val: p.job },
+    { label:'🏡 Family & Life',    val: p.family },
+    { label:'📖 Favorite Book',    val: p.fav_book },
+    { label:'📚 Favorite Genre',   val: p.fav_genre },
+    { label:'🔗 How They Found Us',val: p.how_heard },
+  ].filter(f => f.val && f.val.trim());
+
+  if (fields.length) {
+    document.getElementById('pm-fields').innerHTML = fields.map(f => `
+      <div class="profile-field">
+        <div class="profile-field-label">${f.label}</div>
+        <div class="profile-field-value">${f.val}</div>
+      </div>`).join('');
+  } else {
+    document.getElementById('pm-fields').innerHTML = `<div class="profile-empty-state">No profile details added yet.</div>`;
+  }
+
+  document.getElementById('profile-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeProfileModal(e) {
+  if (e && e.target !== document.getElementById('profile-modal')) return;
+  document.getElementById('profile-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function editMyProfile() {
+  // Close the view modal and open the edit modal for the same member
+  document.getElementById('profile-modal').classList.remove('open');
+  openAdminProfileModal(_currentProfileIdx);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  ADMIN PROFILE EDIT MODAL
+// ════════════════════════════════════════════════════════════════
+function openAdminProfileModal(idx) {
+  const m = DATA.members[idx];
+  const p = m.profile || {};
+  document.getElementById('apm-idx').value         = idx;
+  document.getElementById('apm-title').textContent = `Edit Profile — ${m.name}`;
+  document.getElementById('apm-name').value        = m.name    || '';
+  document.getElementById('apm-email').value       = m.email   || '';
+  document.getElementById('apm-photo').value       = p.photo   || '';
+  document.getElementById('apm-job').value         = p.job     || '';
+  document.getElementById('apm-family').value      = p.family  || '';
+  document.getElementById('apm-how').value         = p.how_heard || '';
+  document.getElementById('apm-favbook').value     = p.fav_book  || '';
+  document.getElementById('apm-favgenre').value    = p.fav_genre || '';
+  // Reset file input
+  document.getElementById('apm-photo-file').value = '';
+  // Show existing photo in preview
+  setPhotoPreview(p.photo || '');
+  document.getElementById('admin-profile-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function setPhotoPreview(src) {
+  const preview = document.getElementById('apm-photo-preview');
+  const clearBtn = document.getElementById('apm-photo-clear');
+  if (src) {
+    preview.innerHTML = `<img src="${src}" />`;
+    clearBtn.style.display = 'inline-block';
+  } else {
+    preview.innerHTML = '📷';
+    clearBtn.style.display = 'none';
+  }
+}
+
+// ── PHOTO CROP ──────────────────────────────────────────────────
+let _cropImg = null, _cropZoom = 1, _cropX = 0, _cropY = 0;
+let _cropDrag = false, _cropDragX0 = 0, _cropDragY0 = 0, _cropImgX0 = 0, _cropImgY0 = 0;
+const CROP_PX = 240;   // canvas display size
+const CROP_OUT = 300;  // final saved size
+
+function handlePhotoUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      _cropImg = img;
+      // Initial zoom: fill the circle
+      _cropZoom = Math.max(CROP_PX / img.width, CROP_PX / img.height);
+      document.getElementById('crop-zoom').min   = _cropZoom.toFixed(3);
+      document.getElementById('crop-zoom').max   = (_cropZoom * 4).toFixed(3);
+      document.getElementById('crop-zoom').value = _cropZoom.toFixed(3);
+      // Start centered
+      _cropX = img.width  / 2;
+      _cropY = img.height / 2;
+      drawCropCanvas();
+      document.getElementById('photo-crop-overlay').classList.add('open');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function drawCropCanvas() {
+  const canvas = document.getElementById('crop-canvas');
+  const ctx = canvas.getContext('2d');
+  const S = CROP_PX;
+  ctx.clearRect(0, 0, S, S);
+
+  // Draw image
+  const sw = _cropImg.width  * _cropZoom;
+  const sh = _cropImg.height * _cropZoom;
+  const dx = S / 2 - _cropX * _cropZoom;
+  const dy = S / 2 - _cropY * _cropZoom;
+  ctx.drawImage(_cropImg, dx, dy, sw, sh);
+
+  // Dark vignette outside circle
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.52)';
+  ctx.beginPath();
+  ctx.rect(0, 0, S, S);
+  ctx.arc(S/2, S/2, S/2 - 1, 0, Math.PI * 2, true);
+  ctx.fill('evenodd');
+  ctx.restore();
+
+  // Circle border
+  ctx.beginPath();
+  ctx.arc(S/2, S/2, S/2 - 1, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+function onCropZoom(val) {
+  _cropZoom = parseFloat(val);
+  // Clamp so image always fills circle
+  const minZ = Math.max(CROP_PX / _cropImg.width, CROP_PX / _cropImg.height);
+  if (_cropZoom < minZ) { _cropZoom = minZ; }
+  clampCrop();
+  drawCropCanvas();
+}
+
+function clampCrop() {
+  // Keep image covering the circle (no empty space)
+  const half = CROP_PX / 2 / _cropZoom;
+  _cropX = Math.min(Math.max(_cropX, half), _cropImg.width  - half);
+  _cropY = Math.min(Math.max(_cropY, half), _cropImg.height - half);
+}
+
+function confirmCrop() {
+  const out = document.createElement('canvas');
+  out.width = CROP_OUT; out.height = CROP_OUT;
+  const ctx = out.getContext('2d');
+  // Clip to circle
+  ctx.beginPath();
+  ctx.arc(CROP_OUT/2, CROP_OUT/2, CROP_OUT/2, 0, Math.PI * 2);
+  ctx.clip();
+  // Draw scaled region
+  const scale = CROP_OUT / CROP_PX;
+  const sw = _cropImg.width  * _cropZoom * scale;
+  const sh = _cropImg.height * _cropZoom * scale;
+  const dx = CROP_OUT/2 - _cropX * _cropZoom * scale;
+  const dy = CROP_OUT/2 - _cropY * _cropZoom * scale;
+  ctx.drawImage(_cropImg, dx, dy, sw, sh);
+  const dataUrl = out.toDataURL('image/jpeg', 0.88);
+  document.getElementById('apm-photo').value = dataUrl;
+  setPhotoPreview(dataUrl);
+  document.getElementById('photo-crop-overlay').classList.remove('open');
+}
+
+function cancelCrop() {
+  document.getElementById('apm-photo-file').value = '';
+  document.getElementById('photo-crop-overlay').classList.remove('open');
+}
+
+// Drag on canvas — mouse
+(function() {
+  function getCanvas() { return document.getElementById('crop-canvas'); }
+
+  function pointerDown(cx, cy) {
+    _cropDrag = true;
+    _cropDragX0 = cx; _cropDragY0 = cy;
+    _cropImgX0 = _cropX; _cropImgY0 = _cropY;
+  }
+  function pointerMove(cx, cy) {
+    if (!_cropDrag) return;
+    _cropX = _cropImgX0 - (cx - _cropDragX0) / _cropZoom;
+    _cropY = _cropImgY0 - (cy - _cropDragY0) / _cropZoom;
+    clampCrop();
+    drawCropCanvas();
+  }
+  function pointerUp() { _cropDrag = false; }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const c = getCanvas();
+    c.addEventListener('mousedown',  e => { e.preventDefault(); pointerDown(e.clientX, e.clientY); });
+    c.addEventListener('mousemove',  e => pointerMove(e.clientX, e.clientY));
+    c.addEventListener('mouseup',    pointerUp);
+    c.addEventListener('mouseleave', pointerUp);
+    c.addEventListener('touchstart', e => { e.preventDefault(); const t = e.touches[0]; pointerDown(t.clientX, t.clientY); }, {passive:false});
+    c.addEventListener('touchmove',  e => { e.preventDefault(); const t = e.touches[0]; pointerMove(t.clientX, t.clientY); }, {passive:false});
+    c.addEventListener('touchend',   pointerUp);
+  });
+})();
+
+function clearPhoto() {
+  document.getElementById('apm-photo').value = '';
+  document.getElementById('apm-photo-file').value = '';
+  setPhotoPreview('');
+}
+
+function closeAdminProfileModal(e) {
+  if (e && e.target !== document.getElementById('admin-profile-modal')) return;
+  document.getElementById('admin-profile-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function saveAdminProfile() {
+  const idx = parseInt(document.getElementById('apm-idx').value);
+  if (isNaN(idx) || !DATA.members[idx]) return;
+  const newName  = document.getElementById('apm-name').value.trim();
+  const newEmail = document.getElementById('apm-email').value.trim();
+  if (newName)  DATA.members[idx].name  = newName;
+  if (newEmail) DATA.members[idx].email = newEmail;
+  DATA.members[idx].profile = {
+    photo:     document.getElementById('apm-photo').value.trim(),
+    job:       document.getElementById('apm-job').value.trim(),
+    family:    document.getElementById('apm-family').value.trim(),
+    how_heard: document.getElementById('apm-how').value.trim(),
+    fav_book:  document.getElementById('apm-favbook').value.trim(),
+    fav_genre: document.getElementById('apm-favgenre').value.trim(),
+  };
+  saveData();
+  renderPublicMembers();
+  renderAdminMembers();
+  renderHero();
+  closeAdminProfileModal();
+  toast(`✓ Profile saved for ${DATA.members[idx].name}!`);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  ADMIN: MEMBERS
+// ════════════════════════════════════════════════════════════════
+function renderAdminMembers() {
+  const tbody = document.getElementById('admin-member-tbody');
+  tbody.innerHTML = DATA.members.map((m,i) => {
+    const hasProfile = m.profile && (m.profile.job || m.profile.family || m.profile.how_heard || m.profile.fav_book || m.profile.fav_genre || m.profile.photo);
+    return `<tr>
+      <td>${m.name}</td>
+      <td style="color:rgba(255,255,255,.5);font-size:0.82rem;">${m.email}</td>
+      <td style="color:rgba(255,255,255,.35);font-size:0.78rem;">${m.joined||'—'}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn-act btn-act-outline btn-act-sm" onclick="openAdminProfileModal(${i})" title="Edit profile">✏️ ${hasProfile ? 'Edit' : 'Add'} Profile</button>
+        <button class="btn-act btn-act-danger btn-act-sm" onclick="removeMember(${i})">Remove</button>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('admin-member-count').textContent = DATA.members.length;
+  updateEmailList();
+}
+
+function addMember() {
+  const name  = document.getElementById('new-member-name').value.trim();
+  const email = document.getElementById('new-member-email').value.trim();
+  if (!name || !email) { toast('Please enter a name and email.'); return; }
+  const now = new Date().toLocaleString('en-US',{month:'short',year:'numeric'});
+  DATA.members.push({ name, email, joined: now, profile:{...EMPTY_PROFILE} });
+  saveData();
+  document.getElementById('new-member-name').value  = '';
+  document.getElementById('new-member-email').value = '';
+  renderAdminMembers();
+  renderPublicMembers();
+  renderHero();
+  toast(`✓ ${name} added to the club!`);
+}
+
+function removeMember(idx) {
+  const name = DATA.members[idx].name;
+  if (!confirm(`Remove ${name} from Book Club?`)) return;
+  DATA.members.splice(idx, 1);
+  saveData();
+  renderAdminMembers();
+  renderPublicMembers();
+  renderHero();
+  toast(`${name} has been removed.`);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  ADMIN: EMAILS
+// ════════════════════════════════════════════════════════════════
+function updateEmailList() {
+  const all = DATA.members.map(m=>m.email).join(', ');
+  const el  = document.getElementById('email-list-display');
+  if (el) el.value = all;
+}
+
+function emailAll(type) {
+  const bcc = DATA.members.map(m=>m.email).join(',');
+  const m   = DATA.meeting;
+  let subject='', body='';
+  if (type==='reminder') {
+    subject = encodeURIComponent(`Book Club Reminder — ${m.book} — ${m.date}`);
+    body    = encodeURIComponent(`Hi everyone!\n\nJust a reminder that Book Club is coming up:\n\n📖 Book: ${m.book}\n📅 Date: ${m.date}\n🕖 Time: ${m.time}\n📍 Location: ${m.location}\n\nSee you there!\nCorey`);
+  } else if (type==='announcement') {
+    subject = encodeURIComponent(`Book Club Announcement`);
+    body    = encodeURIComponent(`Hi everyone!\n\n`);
+  } else {
+    subject = encodeURIComponent(`Book Club`);
+    body    = '';
+  }
+  window.open(`mailto:?bcc=${encodeURIComponent(bcc)}&subject=${subject}&body=${body}`);
+}
+
+function copyAllEmails() {
+  const all = DATA.members.map(m=>m.email).join(', ');
+  navigator.clipboard.writeText(all).then(()=>toast('✓ All emails copied to clipboard!')).catch(()=>{
+    document.getElementById('email-list-display').select();
+    toast('Select the text above and copy it.');
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+//  ADMIN: MEETING
+// ════════════════════════════════════════════════════════════════
+function populateMeetingForm() {
+  const m = DATA.meeting;
+  document.getElementById('m-title').value    = m.book;
+  document.getElementById('m-author').value   = m.author;
+  document.getElementById('m-isbn').value     = m.isbn||'';
+  document.getElementById('m-date').value     = m.date;
+  document.getElementById('m-time').value     = m.time;
+  document.getElementById('m-location').value = m.location;
+}
+
+function saveMeeting() {
+  DATA.meeting.book     = document.getElementById('m-title').value.trim()    || DATA.meeting.book;
+  DATA.meeting.author   = document.getElementById('m-author').value.trim()   || DATA.meeting.author;
+  DATA.meeting.isbn     = document.getElementById('m-isbn').value.trim();
+  DATA.meeting.date     = document.getElementById('m-date').value.trim()     || DATA.meeting.date;
+  DATA.meeting.time     = document.getElementById('m-time').value.trim()     || DATA.meeting.time;
+  DATA.meeting.location = document.getElementById('m-location').value.trim() || DATA.meeting.location;
+  saveData();
+  renderHero();
+  toast('✓ Meeting updated on the homepage!');
+}
+
+function sendCalendarInvite() {
+  const m    = DATA.meeting;
+  const adds = DATA.members.map(mem=>`&add=${encodeURIComponent(mem.email)}`).join('');
+  const title= encodeURIComponent(`Book Club: ${m.book}`);
+  const loc  = encodeURIComponent(m.location);
+  const det  = encodeURIComponent(`Book Club meeting — ${m.book} by ${m.author}\n\nTime: ${m.time}\nLocation: ${m.location}`);
+  // Use stored ISO dates or build a best-effort version
+  const start= m.dateISO || '20260414T190000';
+  const end  = m.dateISOend || '20260414T210000';
+  const url  = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${det}&location=${loc}${adds}`;
+  window.open(url, '_blank');
+  toast('✓ Google Calendar opened with all members added!');
+}
+
+// ════════════════════════════════════════════════════════════════
+//  ADMIN: BOOKS
+// ════════════════════════════════════════════════════════════════
+function addBook() {
+  const title  = document.getElementById('b-title').value.trim();
+  const date   = document.getElementById('b-date').value.trim();
+  const rating = parseFloat(document.getElementById('b-rating').value);
+  if (!title || !date || isNaN(rating) || rating<0 || rating>5) {
+    toast('Please fill in all fields. Rating must be 0–5.'); return;
+  }
+  DATA.books.unshift({ date, title, rating: Math.round(rating*100)/100 });
+  saveData();
+  document.getElementById('b-title').value  = '';
+  document.getElementById('b-date').value   = '';
+  document.getElementById('b-rating').value = '';
+  renderBooks();
+  renderAdminBooks();
+  toast(`✓ "${title}" added to the reading list!`);
+}
+
+function removeBook(idx) {
+  const title = DATA.books[idx].title;
+  if (!confirm(`Remove "${title}" from the book list?`)) return;
+  DATA.books.splice(idx, 1);
+  saveData();
+  renderBooks();
+  renderAdminBooks();
+  toast(`"${title}" removed.`);
+}
+
+function renderAdminBooks() {
+  document.getElementById('admin-books-list').innerHTML = DATA.books.map((b,i) => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,.06);">
+      <div style="flex:1;min-width:0;">
+        <div style="color:#fff;font-size:0.88rem;font-style:italic;font-family:'DM Serif Display',serif;">${b.title}</div>
+        <div style="color:rgba(255,255,255,.35);font-size:0.72rem;">${b.date}</div>
+      </div>
+      <div style="color:rgba(255,255,255,.6);font-size:0.9rem;font-weight:600;min-width:32px;text-align:right;">${b.rating.toFixed(2)}</div>
+      <button class="btn-act btn-act-danger btn-act-sm" onclick="removeBook(${i})">✕</button>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════════
+//  TABS
+// ════════════════════════════════════════════════════════════════
+function showTab(id, btn) {
+  document.querySelectorAll('.admin-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if (id==='tab-email') updateEmailList();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  RECOMMEND & UNSUBSCRIBE
+// ════════════════════════════════════════════════════════════════
+function sendRec(e) {
+  e.preventDefault();
+  const t = document.getElementById('rec-title').value.trim();
+  const a = document.getElementById('rec-author').value.trim();
+  const n = document.getElementById('rec-name').value.trim();
+  const w = document.getElementById('rec-why').value.trim();
+  const sub  = encodeURIComponent(`Book Rec: ${t}`);
+  const body = encodeURIComponent(`Book: ${t}\nAuthor: ${a||'—'}\nFrom: ${n||'—'}\n\nPitch:\n${w||'—'}\n\n— Sent from the Book Club website`);
+  window.location.href = `mailto:corey.fink@gmail.com?subject=${sub}&body=${body}`;
+  document.getElementById('rec-form').reset();
+}
+
+function handleUnsub(e) {
+  e.preventDefault();
+  // Ask for their name/email so you know who it is
+  const name = prompt("What's your name? (So Corey knows who to remove)");
+  if (!name) return;
+  const sub  = encodeURIComponent(`Book Club Unsubscribe — ${name}`);
+  const body = encodeURIComponent(`Hi Corey,\n\nPlease remove me from Book Club emails and calendar invites.\n\nName: ${name}\n\nThanks!`);
+  window.location.href = `mailto:corey.fink@gmail.com?subject=${sub}&body=${body}`;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════════════════════════
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 3000);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  DATE POLL
+// ════════════════════════════════════════════════════════════════
+
+// ── Init poll in DATA ─────────────────────────────────────────
+if (!DATA.poll) {
+  DATA.poll = { active:false, title:'', dates:[], votes:[], showResults:false };
+}
+
+// ── Render public poll section ────────────────────────────────
+function renderPublicPoll() {
+  const poll = DATA.poll;
+  const sec  = document.getElementById('poll-section');
+
+  // Poll lives inside the members area — only show when active
+  if (!poll.active || !poll.dates.length) {
+    sec.style.display = 'none';
+    return;
+  }
+
+  sec.style.display = 'block';
+
+  if (poll.title) document.getElementById('poll-public-title').textContent = poll.title;
+
+  // Date cards
+  document.getElementById('poll-dates-grid').innerHTML = poll.dates.map((d,i) => `
+    <div class="poll-date-card" id="pdc-${i}" onclick="togglePollDate(${i})">
+      <div class="pdc-check">✓</div>
+      <div class="pdc-label">${d}</div>
+    </div>`).join('');
+
+  // Results
+  const resultsWrap = document.getElementById('poll-public-results');
+  if (poll.showResults && poll.votes.length > 0) {
+    resultsWrap.style.display = 'block';
+    renderPublicPollResults();
+  } else {
+    resultsWrap.style.display = 'none';
+  }
+}
+
+function togglePollDate(i) {
+  const card = document.getElementById('pdc-'+i);
+  card.classList.toggle('selected');
+}
+
+function submitPollVote() {
+  const name = document.getElementById('poll-voter-name').value.trim();
+  if (!name) { toast('Please enter your name first!'); return; }
+
+  const selected = DATA.poll.dates.filter((_,i) =>
+    document.getElementById('pdc-'+i)?.classList.contains('selected'));
+
+  if (!selected.length) { toast('Please select at least one date!'); return; }
+
+  // Build email to Corey
+  const sub  = encodeURIComponent(`Book Club Availability — ${name}`);
+  const body = encodeURIComponent(
+    `Hi Corey!\n\nHere's my availability for the next book club meeting:\n\n` +
+    selected.map(d => `✓  ${d}`).join('\n') +
+    `\n\nNot available:\n` +
+    DATA.poll.dates.filter(d => !selected.includes(d)).map(d => `✗  ${d}`).join('\n') +
+    `\n\n— ${name}`
+  );
+  window.location.href = `mailto:corey.fink@gmail.com?subject=${sub}&body=${body}`;
+
+  // Show confirmation
+  document.getElementById('poll-vote-form').style.display = 'none';
+  document.getElementById('poll-submitted-msg').style.display = 'block';
+}
+
+function renderPublicPollResults() {
+  const poll   = DATA.poll;
+  const counts = poll.dates.map((_,i) => ({
+    date:  poll.dates[i],
+    names: poll.votes.filter(v => v.available.includes(i)).map(v => v.name),
+  }));
+  const max = Math.max(...counts.map(c => c.names.length), 1);
+
+  document.getElementById('poll-results-public').innerHTML = counts.map(c => {
+    const isWinner = c.names.length === max && c.names.length > 0;
+    const pct = (c.names.length / max * 100).toFixed(0);
+    return `
+      <div class="poll-result-row">
+        <div class="poll-result-date">${c.date}${isWinner ? '<span class="winner-badge">🏆 Most votes</span>' : ''}</div>
+        <div class="poll-result-bar-wrap">
+          <div class="poll-result-bar-bg">
+            <div class="poll-result-bar-fill ${isWinner?'winner':''}" style="width:${pct}%">
+              <span class="poll-result-bar-count">${c.names.length}</span>
+            </div>
+          </div>
+          <div class="poll-result-names">${c.names.join(', ') || 'No votes yet'}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Admin: set up poll ────────────────────────────────────────
+let dateInputCount = 3;
+
+function addDateInput() {
+  if (dateInputCount >= 6) { toast('Maximum 6 dates allowed.'); return; }
+  dateInputCount++;
+  const wrap = document.getElementById('poll-date-inputs');
+  const row  = document.createElement('div');
+  row.className = 'poll-date-input-row';
+  row.innerHTML = `<input class="afi" type="text" placeholder="Date option ${dateInputCount}" /><button class="btn-act btn-act-danger btn-act-sm" onclick="removeDateInput(this)">✕</button>`;
+  wrap.appendChild(row);
+  if (dateInputCount >= 6) document.getElementById('add-date-btn').style.display = 'none';
+}
+
+function removeDateInput(btn) {
+  btn.closest('.poll-date-input-row').remove();
+  dateInputCount = Math.max(1, dateInputCount - 1);
+  document.getElementById('add-date-btn').style.display = 'inline-flex';
+}
+
+function activatePoll() {
+  const inputs = document.querySelectorAll('#poll-date-inputs .afi');
+  const dates  = Array.from(inputs).map(i => i.value.trim()).filter(Boolean);
+  if (dates.length < 2) { toast('Please enter at least 2 date options.'); return; }
+
+  DATA.poll.active      = true;
+  DATA.poll.title       = document.getElementById('poll-title-input').value.trim() || "When's everyone free?";
+  DATA.poll.dates       = dates;
+  DATA.poll.showResults = document.getElementById('poll-show-results-toggle').checked;
+  if (!DATA.poll.votes) DATA.poll.votes = [];
+  saveData();
+  renderPublicPoll();
+  renderAdminPollResults();
+  document.getElementById('poll-record-card').style.display = 'block';
+  document.getElementById('poll-results-card').style.display = 'block';
+  document.getElementById('deactivate-poll-btn').style.display = 'inline-flex';
+  buildRecordVoteDates();
+  toast('✓ Poll activated! It\'s now live on the public site.');
+}
+
+function deactivatePoll() {
+  if (!confirm('Deactivate the poll and clear all votes?')) return;
+  DATA.poll.active = false;
+  DATA.poll.dates  = [];
+  DATA.poll.votes  = [];
+  saveData();
+  renderPublicPoll();
+  document.getElementById('poll-record-card').style.display   = 'none';
+  document.getElementById('poll-results-card').style.display  = 'none';
+  document.getElementById('deactivate-poll-btn').style.display= 'none';
+  toast('Poll deactivated.');
+}
+
+// ── Admin: record a vote ──────────────────────────────────────
+function buildRecordVoteDates() {
+  document.getElementById('record-vote-dates').innerHTML =
+    DATA.poll.dates.map((d,i) => `
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+        <input type="checkbox" id="rvd-${i}" style="width:16px;height:16px;accent-color:var(--admin-acc);" />
+        <span style="font-size:0.88rem;color:rgba(255,255,255,.75);">${d}</span>
+      </label>`).join('');
+}
+
+function recordAdminVote() {
+  const name = document.getElementById('record-vote-name').value.trim();
+  if (!name) { toast('Please enter the member\'s name.'); return; }
+
+  const available = DATA.poll.dates
+    .map((_,i) => document.getElementById('rvd-'+i)?.checked ? i : -1)
+    .filter(i => i >= 0);
+
+  if (!available.length) { toast('Please check at least one date.'); return; }
+
+  // Update or add vote
+  const existing = DATA.poll.votes.findIndex(v => v.name.toLowerCase() === name.toLowerCase());
+  if (existing >= 0) {
+    DATA.poll.votes[existing].available = available;
+    toast(`✓ Updated ${name}'s vote.`);
+  } else {
+    DATA.poll.votes.push({ name, available });
+    toast(`✓ Recorded ${name}'s availability!`);
+  }
+
+  saveData();
+  renderAdminPollResults();
+  renderPublicPoll();
+  document.getElementById('record-vote-name').value = '';
+  DATA.poll.dates.forEach((_,i) => {
+    const cb = document.getElementById('rvd-'+i);
+    if (cb) cb.checked = false;
+  });
+}
+
+function clearAllVotes() {
+  if (!confirm('Clear all recorded votes?')) return;
+  DATA.poll.votes = [];
+  saveData();
+  renderAdminPollResults();
+  renderPublicPoll();
+  toast('All votes cleared.');
+}
+
+// ── Admin: render results ─────────────────────────────────────
+function renderAdminPollResults() {
+  const poll = DATA.poll;
+  if (!poll.dates.length) return;
+
+  document.getElementById('poll-total-votes').textContent = poll.votes.length + ' vote' + (poll.votes.length!==1?'s':'');
+
+  const counts = poll.dates.map((d,i) => ({
+    date:  d,
+    idx:   i,
+    names: poll.votes.filter(v => v.available.includes(i)).map(v => v.name),
+  }));
+  const max = Math.max(...counts.map(c => c.names.length), 1);
+
+  document.getElementById('admin-poll-results-list').innerHTML = counts.map(c => {
+    const isWinner = c.names.length === max && c.names.length > 0;
+    const pct = (c.names.length / max * 100).toFixed(0);
+    return `
+      <div class="admin-result-row">
+        <div>
+          <div class="admin-result-date">${c.date} ${isWinner ? '🏆' : ''}</div>
+          <div class="admin-result-names-list">${c.names.join(', ') || '—'}</div>
+        </div>
+        <div class="admin-result-bar-bg" style="max-width:220px;">
+          <div class="admin-result-bar-fill ${isWinner?'winner':''}" style="width:${pct}%">
+            <span class="admin-result-count">${c.names.length}</span>
+          </div>
+        </div>
+        ${isWinner && c.names.length > 0
+          ? `<button class="btn-act btn-act-green admin-use-date-btn" onclick="useWinnerDate('${c.date.replace(/'/g,"\\'")}')">Use This Date</button>`
+          : ''}
+      </div>`;
+  }).join('');
+}
+
+function useWinnerDate(date) {
+  // Switch to meeting tab and pre-fill
+  document.querySelectorAll('.admin-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-meeting').classList.add('active');
+  document.querySelectorAll('.admin-tab')[2].classList.add('active');
+  document.getElementById('m-date').value = date;
+  toast('✓ Date pre-filled in the Next Meeting form!');
+  document.getElementById('tab-meeting').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// ── Restore poll state on load ────────────────────────────────
+function restoreAdminPollUI() {
+  const poll = DATA.poll;
+  if (!poll.active) return;
+  document.getElementById('poll-title-input').value = poll.title || '';
+  // Re-populate date inputs
+  const wrap = document.getElementById('poll-date-inputs');
+  wrap.innerHTML = '';
+  dateInputCount = 0;
+  poll.dates.forEach((d,i) => {
+    dateInputCount++;
+    const row = document.createElement('div');
+    row.className = 'poll-date-input-row';
+    row.innerHTML = `<input class="afi" type="text" value="${d}" /><button class="btn-act btn-act-danger btn-act-sm" onclick="removeDateInput(this)">✕</button>`;
+    wrap.appendChild(row);
+  });
+  document.getElementById('poll-show-results-toggle').checked = !!poll.showResults;
+  document.getElementById('poll-record-card').style.display   = 'block';
+  document.getElementById('poll-results-card').style.display  = 'block';
+  document.getElementById('deactivate-poll-btn').style.display= 'inline-flex';
+  buildRecordVoteDates();
+  renderAdminPollResults();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════════════
+renderHero();
+renderBooks();
+// Poll only renders after member login (it lives inside the members area)
+</script>
+</body>
+</html>
