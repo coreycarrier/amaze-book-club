@@ -164,6 +164,21 @@
     .btn-danger { background:transparent; color:#A83030; border:1.5px solid #D0A0A0; }
     .btn-danger:hover { background:#FEF0F0; border-color:#A83030; }
 
+    /* ── RECOMMENDATIONS ── */
+    .recs-section { margin-bottom:24px; }
+    .recs-section h3 { font-family:'DM Serif Display',serif; font-size:1.35rem; color:var(--dark); margin-bottom:4px; }
+    .recs-sub { font-size:0.84rem; color:var(--muted); margin-bottom:20px; }
+    .recs-list { display:flex; flex-direction:column; gap:12px; }
+    .rec-card { background:var(--warm-white); border:1px solid var(--border); border-radius:14px; padding:18px 20px; }
+    .rec-card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:6px; }
+    .rec-book-title { font-family:'DM Serif Display',serif; font-style:italic; font-size:1.05rem; color:var(--dark); }
+    .rec-book-author { font-size:0.78rem; color:var(--muted); margin-top:1px; }
+    .rec-date { font-size:0.7rem; color:var(--muted); white-space:nowrap; flex-shrink:0; }
+    .rec-pitch { font-size:0.85rem; color:var(--text); line-height:1.55; margin-top:8px; font-style:italic; }
+    .rec-by { font-size:0.75rem; color:var(--muted); margin-top:8px; }
+    .rec-by strong { color:var(--pink); }
+    .recs-empty { text-align:center; padding:32px; color:var(--muted); font-size:0.88rem; background:var(--warm-white); border:1px solid var(--border); border-radius:14px; }
+
     .unsub-bar { background:var(--blush); border:1px solid #EADED8; border-radius:12px; padding:18px 24px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
     .unsub-bar p { font-size:0.84rem; color:var(--muted); font-style:italic; }
     .unsub-link { font-family:'Inter',sans-serif; color:var(--coral); border:1.5px solid var(--coral); background:transparent; padding:7px 16px; border-radius:8px; font-size:0.8rem; font-weight:600; cursor:pointer; text-decoration:none; transition:all .14s; white-space:nowrap; }
@@ -557,17 +572,27 @@
           </div>
         </div>
 
+        <!-- Recommendations List -->
+        <div class="recs-section">
+          <h3>📚 Member Recommendations</h3>
+          <p class="recs-sub">Books the group wants to read next — submitted by members.</p>
+          <div class="recs-list" id="recs-list">
+            <div class="recs-empty">No recommendations yet — be the first to add one below!</div>
+          </div>
+        </div>
+
+        <!-- Recommend a Book Form -->
         <div class="form-card">
-          <h3>📬 Recommend a Book</h3>
-          <p class="form-sub">Have a great read in mind for the group? Drop it here.</p>
-          <form id="rec-form" onsubmit="sendRec(event)">
+          <h3>✚ Recommend a Book</h3>
+          <p class="form-sub">Have a great read in mind for the group? Post it here and it'll show up instantly above.</p>
+          <form id="rec-form" onsubmit="postRec(event)">
             <div class="form-row">
               <div class="fg"><label class="fl">Book Title *</label><input class="fi" type="text" id="rec-title" placeholder="e.g. The Midnight Library" required /></div>
               <div class="fg"><label class="fl">Author</label><input class="fi" type="text" id="rec-author" placeholder="e.g. Matt Haig" /></div>
             </div>
             <div class="fg"><label class="fl">Your Name</label><input class="fi" type="text" id="rec-name" placeholder="Who's recommending?" /></div>
             <div class="fg"><label class="fl">Your Pitch</label><textarea class="fta" id="rec-why" placeholder="Why should we read it?"></textarea></div>
-            <button type="submit" class="btn btn-pink">Send Recommendation ✉️</button>
+            <button type="submit" class="btn btn-pink">Post Recommendation ✚</button>
           </form>
         </div>
         <div class="unsub-bar">
@@ -1160,6 +1185,7 @@ async function checkMemberPw() {
     document.getElementById('members-content').style.display = 'block';
     document.getElementById('members-grid').innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:0.88rem;">Loading members…</div>';
     await loadProfilesFromSupabase();
+    await loadRecommendations();
     renderPublicMembers();
     renderPublicPoll();
   } else {
@@ -1632,18 +1658,60 @@ function showTab(id, btn) {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  RECOMMEND & UNSUBSCRIBE
+//  RECOMMENDATIONS
 // ════════════════════════════════════════════════════════════════
-function sendRec(e) {
+async function loadRecommendations() {
+  try {
+    const { data, error } = await db.from('recommendations').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    renderRecommendations(data || []);
+  } catch(e) {
+    console.warn('Could not load recommendations:', e.message);
+  }
+}
+
+function renderRecommendations(recs) {
+  const list = document.getElementById('recs-list');
+  if (!recs.length) {
+    list.innerHTML = '<div class="recs-empty">No recommendations yet — be the first to add one below!</div>';
+    return;
+  }
+  list.innerHTML = recs.map(r => {
+    const date = new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return `
+      <div class="rec-card">
+        <div class="rec-card-top">
+          <div>
+            <div class="rec-book-title">${r.title}</div>
+            ${r.author ? `<div class="rec-book-author">by ${r.author}</div>` : ''}
+          </div>
+          <div class="rec-date">${date}</div>
+        </div>
+        ${r.pitch ? `<div class="rec-pitch">"${r.pitch}"</div>` : ''}
+        ${r.recommended_by ? `<div class="rec-by">Recommended by <strong>${r.recommended_by}</strong></div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+async function postRec(e) {
   e.preventDefault();
-  const t = document.getElementById('rec-title').value.trim();
-  const a = document.getElementById('rec-author').value.trim();
-  const n = document.getElementById('rec-name').value.trim();
-  const w = document.getElementById('rec-why').value.trim();
-  const sub  = encodeURIComponent(`Book Rec: ${t}`);
-  const body = encodeURIComponent(`Book: ${t}\nAuthor: ${a||'—'}\nFrom: ${n||'—'}\n\nPitch:\n${w||'—'}\n\n— Sent from the Book Club website`);
-  window.location.href = `mailto:corey.fink@gmail.com?subject=${sub}&body=${body}`;
-  document.getElementById('rec-form').reset();
+  const title  = document.getElementById('rec-title').value.trim();
+  const author = document.getElementById('rec-author').value.trim();
+  const name   = document.getElementById('rec-name').value.trim();
+  const pitch  = document.getElementById('rec-why').value.trim();
+  if (!title) return;
+  try {
+    const { error } = await db.from('recommendations').insert({
+      title, author, recommended_by: name, pitch
+    });
+    if (error) throw error;
+    document.getElementById('rec-form').reset();
+    toast('✓ Recommendation posted!');
+    await loadRecommendations();
+  } catch(e) {
+    toast('Something went wrong — try again.');
+    console.error(e);
+  }
 }
 
 function handleUnsub(e) {
