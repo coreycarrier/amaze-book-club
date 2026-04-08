@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>emailjs.init("vLHzlEzx4z9dE_Oi6");</script>
   <style>
     :root {
       --pink:      #D14B6A;
@@ -1716,12 +1718,11 @@ async function postRec(e) {
 
 function handleUnsub(e) {
   e.preventDefault();
-  // Ask for their name/email so you know who it is
   const name = prompt("What's your name? (So Corey knows who to remove)");
   if (!name) return;
-  const sub  = encodeURIComponent(`Book Club Unsubscribe — ${name}`);
-  const body = encodeURIComponent(`Hi Corey,\n\nPlease remove me from Book Club emails and calendar invites.\n\nName: ${name}\n\nThanks!`);
-  window.location.href = `mailto:corey.fink@gmail.com?subject=${sub}&body=${body}`;
+  emailjs.send("service_p3xib6g", "template_35ijgoj", { member_name: name })
+    .then(() => toast("Done! Corey has been notified and will remove you shortly."))
+    .catch(() => toast("Something went wrong — please try again."));
 }
 
 // ════════════════════════════════════════════════════════════════
