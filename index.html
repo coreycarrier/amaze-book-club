@@ -561,11 +561,11 @@
                 </div>
                 <button class="btn btn-pink" onclick="submitPollVote()" style="height:42px;">Submit Availability</button>
               </div>
-              <p style="font-size:0.75rem;color:var(--muted);margin-top:10px;">Submitting opens a pre-filled email to Corey — just hit send!</p>
             </div>
             <div class="poll-submitted" id="poll-submitted-msg">
-              <h4>✓ Thanks!</h4>
-              <p>Your availability has been sent to Corey. She'll confirm the date soon.</p>
+              <h4>✓ Vote recorded!</h4>
+              <p>Your availability is saved. Corey will confirm the date once everyone has voted.</p>
+              <button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="document.getElementById('poll-submitted-msg').style.display='none';document.getElementById('poll-vote-form').style.display='block';">Change my vote</button>
             </div>
             <div id="poll-public-results" style="display:none; margin-top:24px;">
               <div style="font-size:0.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;">Current Standings</div>
@@ -935,6 +935,44 @@ async function saveProfileToSupabase(email, profile) {
   }
 }
 
+// ── Poll: load from Supabase ──────────────────────────────────
+async function loadPollFromSupabase() {
+  try {
+    const { data: cfg }   = await db.from('poll_config').select('*').eq('id','active').maybeSingle();
+    const { data: votes } = await db.from('poll_votes').select('*').order('created_at');
+    if (cfg) {
+      DATA.poll.active      = cfg.active;
+      DATA.poll.title       = cfg.title || "When's everyone free?";
+      DATA.poll.dates       = cfg.dates  || [];
+      DATA.poll.showResults = cfg.show_results;
+      DATA.poll.votes       = (votes || []).map(v => ({
+        name:      v.voter_name,
+        available: v.available_dates || []   // array of date strings
+      }));
+    } else {
+      DATA.poll = { active:false, title:'', dates:[], votes:[], showResults:true };
+    }
+  } catch(e) {
+    console.warn('Could not load poll from Supabase:', e.message);
+  }
+}
+
+// ── Poll: save config to Supabase ─────────────────────────────
+async function savePollConfig() {
+  try {
+    await db.from('poll_config').upsert({
+      id:           'active',
+      title:        DATA.poll.title,
+      dates:        DATA.poll.dates,
+      show_results: DATA.poll.showResults,
+      active:       DATA.poll.active,
+      updated_at:   new Date().toISOString()
+    });
+  } catch(e) {
+    console.warn('Could not save poll config:', e.message);
+  }
+}
+
 // ════════════════════════════════════════════════════════════════
 //  PASSWORDS  (change these!)
 // ════════════════════════════════════════════════════════════════
@@ -1188,6 +1226,7 @@ async function checkMemberPw() {
     document.getElementById('members-grid').innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:0.88rem;">Loading members…</div>';
     await loadProfilesFromSupabase();
     await loadRecommendations();
+    await loadPollFromSupabase();
     renderPublicMembers();
     renderPublicPoll();
   } else {
@@ -1197,7 +1236,7 @@ async function checkMemberPw() {
   }
 }
 
-function checkAdminPw() {
+async function checkAdminPw() {
   if (document.getElementById('admin-pw').value === ADMIN_PW) {
     document.getElementById('admin-gate').style.display    = 'none';
     document.getElementById('admin-content').style.display = 'block';
@@ -1205,6 +1244,7 @@ function checkAdminPw() {
     renderAdminBooks();
     populateMeetingForm();
     updateEmailList();
+    await loadPollFromSupabase();
     restoreAdminPollUI();
   } else {
     document.getElementById('admin-pw-err').style.display = 'block';
@@ -1783,36 +1823,53 @@ function togglePollDate(i) {
   card.classList.toggle('selected');
 }
 
-function submitPollVote() {
+async function submitPollVote() {
   const name = document.getElementById('poll-voter-name').value.trim();
   if (!name) { toast('Please enter your name first!'); return; }
 
-  const selected = DATA.poll.dates.filter((_,i) =>
+  const selectedDates = DATA.poll.dates.filter((_,i) =>
     document.getElementById('pdc-'+i)?.classList.contains('selected'));
 
-  if (!selected.length) { toast('Please select at least one date!'); return; }
+  if (!selectedDates.length) { toast('Please select at least one date!'); return; }
 
-  // Build email to Corey
-  const sub  = encodeURIComponent(`Book Club Availability — ${name}`);
-  const body = encodeURIComponent(
-    `Hi Corey!\n\nHere's my availability for the next book club meeting:\n\n` +
-    selected.map(d => `✓  ${d}`).join('\n') +
-    `\n\nNot available:\n` +
-    DATA.poll.dates.filter(d => !selected.includes(d)).map(d => `✗  ${d}`).join('\n') +
-    `\n\n— ${name}`
-  );
-  window.location.href = `mailto:corey.fink@gmail.com?subject=${sub}&body=${body}`;
+  const btn = document.querySelector('#poll-vote-form .btn-pink');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
 
-  // Show confirmation
-  document.getElementById('poll-vote-form').style.display = 'none';
-  document.getElementById('poll-submitted-msg').style.display = 'block';
+  try {
+    // Check if this person already voted (case-insensitive match)
+    const { data: existing } = await db.from('poll_votes')
+      .select('id').ilike('voter_name', name).maybeSingle();
+
+    if (existing) {
+      await db.from('poll_votes')
+        .update({ available_dates: selectedDates })
+        .eq('id', existing.id);
+    } else {
+      await db.from('poll_votes')
+        .insert({ voter_name: name, available_dates: selectedDates });
+    }
+
+    // Reload fresh data so results are accurate
+    await loadPollFromSupabase();
+    renderPublicPollResults();
+
+    document.getElementById('poll-vote-form').style.display    = 'none';
+    document.getElementById('poll-submitted-msg').style.display = 'block';
+    if (DATA.poll.showResults) {
+      document.getElementById('poll-public-results').style.display = 'block';
+    }
+  } catch(e) {
+    console.error('Poll vote error:', e);
+    toast('Sorry, there was a problem saving your vote. Please try again.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit Availability'; }
+  }
 }
 
 function renderPublicPollResults() {
   const poll   = DATA.poll;
-  const counts = poll.dates.map((_,i) => ({
-    date:  poll.dates[i],
-    names: poll.votes.filter(v => v.available.includes(i)).map(v => v.name),
+  const counts = poll.dates.map(d => ({
+    date:  d,
+    names: poll.votes.filter(v => v.available.includes(d)).map(v => v.name),
   }));
   const max = Math.max(...counts.map(c => c.names.length), 1);
 
@@ -1854,7 +1911,7 @@ function removeDateInput(btn) {
   document.getElementById('add-date-btn').style.display = 'inline-flex';
 }
 
-function activatePoll() {
+async function activatePoll() {
   const inputs = document.querySelectorAll('#poll-date-inputs .afi');
   const dates  = Array.from(inputs).map(i => i.value.trim()).filter(Boolean);
   if (dates.length < 2) { toast('Please enter at least 2 date options.'); return; }
@@ -1863,8 +1920,16 @@ function activatePoll() {
   DATA.poll.title       = document.getElementById('poll-title-input').value.trim() || "When's everyone free?";
   DATA.poll.dates       = dates;
   DATA.poll.showResults = document.getElementById('poll-show-results-toggle').checked;
-  if (!DATA.poll.votes) DATA.poll.votes = [];
-  saveData();
+  DATA.poll.votes       = [];
+
+  try {
+    // Clear any existing votes, then save new config
+    await db.from('poll_votes').delete().not('voter_name', 'is', null);
+    await savePollConfig();
+  } catch(e) {
+    console.warn('Supabase poll save error:', e.message);
+  }
+
   renderPublicPoll();
   renderAdminPollResults();
   document.getElementById('poll-record-card').style.display = 'block';
@@ -1874,12 +1939,17 @@ function activatePoll() {
   toast('✓ Poll activated! It\'s now live on the public site.');
 }
 
-function deactivatePoll() {
+async function deactivatePoll() {
   if (!confirm('Deactivate the poll and clear all votes?')) return;
   DATA.poll.active = false;
   DATA.poll.dates  = [];
   DATA.poll.votes  = [];
-  saveData();
+
+  try {
+    await db.from('poll_votes').delete().not('voter_name', 'is', null);
+    await savePollConfig();
+  } catch(e) {}
+
   renderPublicPoll();
   document.getElementById('poll-record-card').style.display   = 'none';
   document.getElementById('poll-results-card').style.display  = 'none';
@@ -1897,29 +1967,36 @@ function buildRecordVoteDates() {
       </label>`).join('');
 }
 
-function recordAdminVote() {
+async function recordAdminVote() {
   const name = document.getElementById('record-vote-name').value.trim();
   if (!name) { toast('Please enter the member\'s name.'); return; }
 
-  const available = DATA.poll.dates
-    .map((_,i) => document.getElementById('rvd-'+i)?.checked ? i : -1)
-    .filter(i => i >= 0);
+  // Collect date strings (not indices) for whichever boxes are checked
+  const availableDates = DATA.poll.dates
+    .filter((_,i) => document.getElementById('rvd-'+i)?.checked);
 
-  if (!available.length) { toast('Please check at least one date.'); return; }
+  if (!availableDates.length) { toast('Please check at least one date.'); return; }
 
-  // Update or add vote
-  const existing = DATA.poll.votes.findIndex(v => v.name.toLowerCase() === name.toLowerCase());
-  if (existing >= 0) {
-    DATA.poll.votes[existing].available = available;
-    toast(`✓ Updated ${name}'s vote.`);
-  } else {
-    DATA.poll.votes.push({ name, available });
-    toast(`✓ Recorded ${name}'s availability!`);
+  try {
+    const { data: existing } = await db.from('poll_votes')
+      .select('id').ilike('voter_name', name).maybeSingle();
+
+    if (existing) {
+      await db.from('poll_votes').update({ available_dates: availableDates }).eq('id', existing.id);
+      toast(`✓ Updated ${name}'s vote.`);
+    } else {
+      await db.from('poll_votes').insert({ voter_name: name, available_dates: availableDates });
+      toast(`✓ Recorded ${name}'s availability!`);
+    }
+
+    await loadPollFromSupabase();
+    renderAdminPollResults();
+    renderPublicPoll();
+  } catch(e) {
+    toast('Error saving vote. Please try again.');
+    console.error(e);
   }
 
-  saveData();
-  renderAdminPollResults();
-  renderPublicPoll();
   document.getElementById('record-vote-name').value = '';
   DATA.poll.dates.forEach((_,i) => {
     const cb = document.getElementById('rvd-'+i);
@@ -1927,13 +2004,18 @@ function recordAdminVote() {
   });
 }
 
-function clearAllVotes() {
+async function clearAllVotes() {
   if (!confirm('Clear all recorded votes?')) return;
-  DATA.poll.votes = [];
-  saveData();
-  renderAdminPollResults();
-  renderPublicPoll();
-  toast('All votes cleared.');
+  try {
+    await db.from('poll_votes').delete().not('voter_name', 'is', null);
+    await loadPollFromSupabase();
+    renderAdminPollResults();
+    renderPublicPoll();
+    toast('All votes cleared.');
+  } catch(e) {
+    toast('Error clearing votes. Please try again.');
+    console.error(e);
+  }
 }
 
 // ── Admin: render results ─────────────────────────────────────
@@ -1943,10 +2025,9 @@ function renderAdminPollResults() {
 
   document.getElementById('poll-total-votes').textContent = poll.votes.length + ' vote' + (poll.votes.length!==1?'s':'');
 
-  const counts = poll.dates.map((d,i) => ({
+  const counts = poll.dates.map(d => ({
     date:  d,
-    idx:   i,
-    names: poll.votes.filter(v => v.available.includes(i)).map(v => v.name),
+    names: poll.votes.filter(v => v.available.includes(d)).map(v => v.name),
   }));
   const max = Math.max(...counts.map(c => c.names.length), 1);
 
