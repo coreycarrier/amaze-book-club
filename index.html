@@ -263,18 +263,22 @@
 
     /* ── DATE POLL (public) ── */
     #poll-section { background:var(--blush); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
-    .poll-dates-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin-bottom:28px; }
-    .poll-date-card {
-      background:var(--warm-white); border:2px solid var(--border); border-radius:14px;
-      padding:18px 14px; text-align:center; cursor:pointer;
-      transition:all .15s; user-select:none;
+    .poll-dates-list { display:flex; flex-direction:column; gap:8px; margin-bottom:24px; }
+    .poll-check-item {
+      display:flex; align-items:center; gap:12px;
+      background:var(--warm-white); border:1.5px solid var(--border); border-radius:10px;
+      padding:11px 16px; cursor:pointer; transition:all .15s; user-select:none;
     }
-    .poll-date-card:hover { border-color:var(--pink); background:var(--pink-lt); }
-    .poll-date-card.selected { border-color:var(--green); background:var(--green-lt); }
-    .poll-date-card.selected .pdc-check { opacity:1; }
-    .pdc-check { font-size:1.1rem; margin-bottom:6px; opacity:0; transition:opacity .15s; }
-    .pdc-label { font-size:0.85rem; font-weight:600; color:var(--dark); line-height:1.3; }
-    .pdc-sub { font-size:0.72rem; color:var(--muted); margin-top:3px; }
+    .poll-check-item:hover { border-color:var(--pink); background:var(--pink-lt); }
+    .poll-check-item.selected { border-color:var(--green); background:var(--green-lt); }
+    .poll-check-box {
+      width:20px; height:20px; border-radius:5px; border:2px solid var(--border);
+      flex-shrink:0; display:flex; align-items:center; justify-content:center;
+      transition:all .15s; background:#fff; font-size:0.75rem; color:#fff;
+    }
+    .poll-check-item.selected .poll-check-box { background:var(--green); border-color:var(--green); }
+    .poll-check-item.selected .poll-check-box::after { content:'✓'; }
+    .poll-check-label { font-size:0.9rem; font-weight:600; color:var(--dark); }
     .poll-form-row { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
     .poll-name-wrap { flex:1; min-width:180px; }
     .poll-submitted { background:var(--green-lt); border:1px solid #A8DEC0; border-radius:14px; padding:22px 24px; text-align:center; display:none; }
@@ -553,7 +557,7 @@
             <h3 id="poll-public-title" style="margin-bottom:4px;">When's everyone free?</h3>
             <p class="form-sub">Pick every date that works for you.</p>
             <div id="poll-vote-form">
-              <div class="poll-dates-grid" id="poll-dates-grid"></div>
+              <div class="poll-dates-list" id="poll-dates-grid"></div>
               <div class="poll-form-row">
                 <div class="poll-name-wrap">
                   <label class="fl">Your Name</label>
@@ -1627,6 +1631,9 @@ function saveMeeting() {
   DATA.meeting.date     = document.getElementById('m-date').value.trim()     || DATA.meeting.date;
   DATA.meeting.time     = document.getElementById('m-time').value.trim()     || DATA.meeting.time;
   DATA.meeting.location = document.getElementById('m-location').value.trim() || DATA.meeting.location;
+  // Auto-compute ISO dates for calendar invite
+  const iso = parseDateToISO(DATA.meeting.date);
+  if (iso) { DATA.meeting.dateISO = iso.dateISO; DATA.meeting.dateISOend = iso.dateISOend; }
   saveData();
   renderHero();
   toast('✓ Meeting updated on the homepage!');
@@ -1801,11 +1808,11 @@ function renderPublicPoll() {
 
   if (poll.title) document.getElementById('poll-public-title').textContent = poll.title;
 
-  // Date cards
+  // Date checkboxes
   document.getElementById('poll-dates-grid').innerHTML = poll.dates.map((d,i) => `
-    <div class="poll-date-card" id="pdc-${i}" onclick="togglePollDate(${i})">
-      <div class="pdc-check">✓</div>
-      <div class="pdc-label">${d}</div>
+    <div class="poll-check-item" id="pdc-${i}" onclick="togglePollDate(${i})">
+      <div class="poll-check-box"></div>
+      <div class="poll-check-label">${d} <span style="color:var(--muted);font-weight:400;font-size:0.82rem;">· 7:00 PM</span></div>
     </div>`).join('');
 
   // Results
@@ -1819,8 +1826,7 @@ function renderPublicPoll() {
 }
 
 function togglePollDate(i) {
-  const card = document.getElementById('pdc-'+i);
-  card.classList.toggle('selected');
+  document.getElementById('pdc-'+i).classList.toggle('selected');
 }
 
 async function submitPollVote() {
@@ -2052,14 +2058,46 @@ function renderAdminPollResults() {
   }).join('');
 }
 
+// ── Parse a date string like "Tue, Jun 3" into ISO format ────
+function parseDateToISO(dateStr) {
+  try {
+    const months = {
+      january:0, february:1, march:2, april:3, may:4, june:5,
+      july:6, august:7, september:8, october:9, november:10, december:11,
+      jan:0, feb:1, mar:2, apr:3, jun:5, jul:6, aug:7, sep:8, oct:9, nov:10, dec:11
+    };
+    const lower = dateStr.toLowerCase();
+    let month = -1;
+    for (const [name, idx] of Object.entries(months)) {
+      if (lower.includes(name)) { month = idx; break; }
+    }
+    if (month === -1) return null;
+    const dayMatch = lower.match(/\b(\d{1,2})\b/);
+    if (!dayMatch) return null;
+    const day = parseInt(dayMatch[1]);
+    const yearMatch = lower.match(/\b(20\d{2})\b/);
+    let year = yearMatch ? parseInt(yearMatch[1]) : new Date().getFullYear();
+    // If the date has already passed this year and no year was specified, assume next year
+    if (!yearMatch && new Date(year, month, day) < new Date()) year++;
+    const y = String(year);
+    const m = String(month + 1).padStart(2, '0');
+    const d = String(day).padStart(2, '0');
+    return { dateISO: `${y}${m}${d}T190000`, dateISOend: `${y}${m}${d}T210000` };
+  } catch(e) { return null; }
+}
+
 function useWinnerDate(date) {
-  // Switch to meeting tab and pre-fill
+  // Switch to meeting tab and pre-fill date, time, and ISO dates
   document.querySelectorAll('.admin-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-meeting').classList.add('active');
   document.querySelectorAll('.admin-tab')[2].classList.add('active');
   document.getElementById('m-date').value = date;
-  toast('✓ Date pre-filled in the Next Meeting form!');
+  document.getElementById('m-time').value = '7:00 – 9:00 PM';
+  // Pre-compute ISO dates so the calendar invite is ready to go
+  const iso = parseDateToISO(date);
+  if (iso) { DATA.meeting.dateISO = iso.dateISO; DATA.meeting.dateISOend = iso.dateISOend; }
+  toast('✓ Date & time pre-filled — just add the book and save!');
   document.getElementById('tab-meeting').scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
