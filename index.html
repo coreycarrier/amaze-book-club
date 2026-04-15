@@ -326,8 +326,10 @@
 
     /* ── MEMBER CARDS (clickable) ── */
     .member-card { cursor:pointer; }
-    .member-card .m-tap-hint { font-size:0.62rem; color:var(--muted); margin-top:6px; opacity:0; transition:opacity .15s; }
+    .member-card .m-tap-hint { font-size:0.62rem; color:var(--muted); margin-top:6px; opacity:.7; transition:opacity .15s; }
     .member-card:hover .m-tap-hint { opacity:1; }
+    .m-avatar.has-profile { box-shadow:0 0 0 3px #fff, 0 0 0 5px var(--green); }
+    .m-avatar.no-profile  { box-shadow:0 0 0 3px #fff, 0 0 0 5px var(--border); }
 
     /* ── PROFILE MODAL ── */
     .profile-modal-overlay {
@@ -434,6 +436,8 @@
       .nav-inner ul { display:none; }
       .admin-tabs { gap:2px; }
       .profile-top { flex-direction:column; text-align:center; }
+      .book-title { white-space:normal; overflow:visible; text-overflow:unset; }
+      .book-row { align-items:flex-start; }
     }
 
     /* ── PULSE ANIMATION ── */
@@ -1535,12 +1539,12 @@ function renderPublicMembers() {
     return `
       <div class="member-card" onclick="openProfileModal(${i})" title="Click to learn more about ${m.name}">
         ${p.photo
-          ? `<div class="m-avatar" style="background:linear-gradient(135deg,${pal[0]},${pal[1]});overflow:hidden;"><img src="${p.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none'" /></div>`
-          : `<div class="m-avatar" style="background:linear-gradient(135deg,${pal[0]},${pal[1]})">${init}</div>`
+          ? `<div class="m-avatar has-profile" style="background:linear-gradient(135deg,${pal[0]},${pal[1]});overflow:hidden;"><img src="${p.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none'" /></div>`
+          : `<div class="m-avatar ${hasProfile ? 'has-profile' : 'no-profile'}" style="background:linear-gradient(135deg,${pal[0]},${pal[1]})">${init}</div>`
         }
         <div class="m-name">${m.name}</div>
         ${showRsvp ? `<span class="m-status ${cls[st]}">${lbl[st]}</span>` : ''}
-        <div class="m-tap-hint">${hasProfile ? '👤 View profile' : 'tap to view'}</div>
+        <div class="m-tap-hint">${hasProfile ? '✓ Has profile' : '+ Add info'}</div>
       </div>`;
   }).join('');
 }
