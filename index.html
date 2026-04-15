@@ -438,14 +438,15 @@
     /* ── PULSE ANIMATION ── */
     @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
 
-    /* ── STAR RATING INPUT ── */
-    .star-row { display:flex; gap:4px; margin:10px 0 4px; }
-    .star-btn {
-      background:none; border:none; cursor:pointer; font-size:2.2rem;
-      color:#DDD; transition:color .1s, transform .1s; padding:2px 3px; line-height:1;
-    }
-    .star-btn.lit { color:#F5C518; }
-    .star-btn:hover { transform:scale(1.15); }
+    /* ── STAR DISPLAY (partial-fill) ── */
+    .stars-outer { position:relative; display:inline-block; line-height:1; white-space:nowrap; }
+    .stars-bg { color:rgba(180,160,140,.35); }
+    .stars-fg { color:#F5C518; position:absolute; top:0; left:0; overflow:hidden; white-space:nowrap; }
+
+    /* ── SCORE GUIDE ── */
+    .score-guide { display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:8px; }
+    .score-guide span { font-size:0.75rem; color:var(--muted); white-space:nowrap; }
+    .score-guide span::before { content:''; display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--pink); margin-right:5px; vertical-align:middle; opacity:.6; }
 
     /* ── SCORING WIDGET (members) ── */
     #scoring-section .score-form-card { background:var(--warm-white); border:1px solid var(--border); border-radius:16px; padding:28px; }
@@ -458,6 +459,28 @@
     .scoring-submitted { background:var(--green-lt); border:1px solid #A8DEC0; border-radius:14px; padding:22px 24px; text-align:center; display:none; }
     .scoring-submitted h4 { font-family:'DM Serif Display',serif; font-size:1.2rem; color:var(--green); margin-bottom:6px; }
     .scoring-submitted p { font-size:0.85rem; color:#2A6A4A; }
+
+    /* ── ACCORDION SECTIONS ── */
+    .accordion-wrap {
+      border:1px solid var(--border); border-radius:16px; overflow:hidden;
+      margin-bottom:14px; background:var(--warm-white);
+    }
+    .accordion-header {
+      width:100%; display:flex; align-items:center; gap:10px;
+      padding:16px 20px; background:none; border:none; cursor:pointer;
+      text-align:left; transition:background .15s; user-select:none;
+    }
+    .accordion-header:hover { background:var(--cream); }
+    .acc-icon { font-size:1.05rem; flex-shrink:0; }
+    .acc-title { font-family:'DM Serif Display',serif; font-size:1.05rem; color:var(--dark); flex:1; line-height:1.3; }
+    .acc-badge { font-size:0.68rem; font-weight:700; padding:3px 9px; border-radius:20px; background:var(--pink-lt); color:var(--pink); flex-shrink:0; }
+    .acc-badge.live { background:#FDE8E8; color:#C03030; }
+    .acc-count { font-size:0.72rem; font-weight:600; color:var(--muted); background:var(--border); padding:2px 9px; border-radius:10px; flex-shrink:0; }
+    .acc-chevron { color:var(--muted); flex-shrink:0; transition:transform .22s; font-size:0.9rem; line-height:1; }
+    .accordion-wrap.open .acc-chevron { transform:rotate(180deg); }
+    .accordion-body { max-height:0; overflow:hidden; transition:max-height .35s ease; }
+    .accordion-wrap.open .accordion-body { max-height:9999px; }
+    .accordion-body-inner { padding:16px 20px 22px; border-top:1px solid var(--border); }
 
     /* ── BOOK DETAIL MODAL ── */
     .book-modal-overlay {
@@ -612,89 +635,126 @@
           </a>
         </div>
 
-        <!-- Date Poll — members only, only shown when active -->
-        <div id="poll-section" style="display:none; margin-bottom:24px;">
-          <div class="form-card" style="margin-bottom:0;">
-            <h3 id="poll-public-title" style="margin-bottom:4px;">When's everyone free?</h3>
-            <p class="form-sub">Pick every date that works for you.</p>
-            <div id="poll-vote-form">
-              <div class="poll-form-row" style="margin-bottom:16px;">
-                <div class="poll-name-wrap">
-                  <label class="fl">Your Name</label>
-                  <input class="fi" type="text" id="poll-voter-name" placeholder="e.g. Sarah" />
+        <!-- ── ACCORDION: BOOK SCORING (shown when session active) ── -->
+        <div class="accordion-wrap" id="acc-scoring" style="display:none;">
+          <button class="accordion-header" onclick="toggleAccordion('acc-scoring')">
+            <span class="acc-icon">⭐</span>
+            <span class="acc-title" id="scoring-acc-title">Rate Tonight's Book</span>
+            <span class="acc-badge live">🔴 Live</span>
+            <span class="acc-chevron">▾</span>
+          </button>
+          <div class="accordion-body">
+            <div class="accordion-body-inner">
+              <div id="scoring-section">
+                <div id="scoring-form">
+                  <div class="fg">
+                    <label class="fl">Your Score (1–5, decimals OK)</label>
+                    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:4px;">
+                      <input type="number" class="fi" id="score-voter-score" min="1" max="5" step="0.01"
+                             placeholder="e.g. 3.75" style="max-width:130px;"
+                             oninput="updateScoreVisual(this.value)" />
+                      <div class="stars-outer" id="score-stars-visual" style="font-size:2rem;">
+                        <span class="stars-bg">★★★★★</span>
+                        <span class="stars-fg" id="score-fill-bar" style="width:0%">★★★★★</span>
+                      </div>
+                    </div>
+                    <div class="score-guide">
+                      <span>5 — Best book you've ever read</span>
+                      <span>4 — Great book</span>
+                      <span>3 — Good book</span>
+                      <span>2 — Not great</span>
+                      <span>1 — Terrible</span>
+                    </div>
+                  </div>
+                  <div class="fg" style="margin-top:12px;">
+                    <label class="fl">Your Name</label>
+                    <input class="fi" type="text" id="score-voter-name" placeholder="e.g. Corey" />
+                  </div>
+                  <button class="btn btn-pink" onclick="submitMemberScore()" style="margin-top:4px;">Submit My Score</button>
+                </div>
+                <div class="scoring-submitted" id="scoring-submitted-msg">
+                  <h4>✓ Score recorded!</h4>
+                  <p id="scoring-submitted-text">Thanks! Your score has been saved.</p>
+                  <button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="showScoringForm()">Change my score</button>
+                </div>
+                <div id="scoring-results-pub" style="display:none; margin-top:20px; padding-top:16px; border-top:1px solid var(--border);">
+                  <div class="score-who-label">Scores so far</div>
+                  <div class="score-voter-list" id="scoring-voter-list-pub"></div>
+                  <div id="scoring-avg-pub"></div>
                 </div>
               </div>
-              <div class="poll-dates-list" id="poll-dates-grid"></div>
-              <button class="btn btn-pink" onclick="submitPollVote()" style="height:42px; margin-top:8px;">Submit Availability</button>
-            </div>
-            <div class="poll-submitted" id="poll-submitted-msg">
-              <h4>✓ Vote recorded!</h4>
-              <p>Your availability is saved. Corey will confirm the date once everyone has voted.</p>
-              <button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="document.getElementById('poll-submitted-msg').style.display='none';document.getElementById('poll-vote-form').style.display='block';">Change my vote</button>
-            </div>
-            <div id="poll-public-results" style="display:none; margin-top:24px;">
-              <div style="font-size:0.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;">Current Standings</div>
-              <div class="poll-results-grid" id="poll-results-public"></div>
             </div>
           </div>
         </div>
 
-        <!-- Live Scoring Widget — members only, only shown when active -->
-        <div id="scoring-section" style="display:none; margin-bottom:24px;">
-          <div class="score-form-card">
-            <h3 id="scoring-book-title-pub" style="font-family:'DM Serif Display',serif;font-size:1.35rem;color:var(--dark);margin-bottom:4px;">📖 Rate Tonight's Book</h3>
-            <p class="form-sub">Give your honest rating — 1 star (painful) to 5 stars (loved it).</p>
-            <div id="scoring-form">
-              <div class="fg">
-                <label class="fl">Your Rating</label>
-                <div class="star-row" id="score-stars-input"></div>
-                <div id="score-selected-label" style="font-size:0.82rem;color:var(--muted);min-height:18px;margin-bottom:8px;"></div>
+        <!-- ── ACCORDION: DATE POLL (shown when poll active) ── -->
+        <div class="accordion-wrap" id="acc-poll" style="display:none;">
+          <button class="accordion-header" onclick="toggleAccordion('acc-poll')">
+            <span class="acc-icon">📅</span>
+            <span class="acc-title" id="poll-acc-title">When's Everyone Free?</span>
+            <span class="acc-chevron">▾</span>
+          </button>
+          <div class="accordion-body">
+            <div class="accordion-body-inner">
+              <div id="poll-section">
+                <h3 id="poll-public-title" style="display:none;"></h3>
+                <p class="form-sub" style="margin-bottom:16px;">Pick every date that works for you.</p>
+                <div id="poll-vote-form">
+                  <div class="poll-form-row" style="margin-bottom:16px;">
+                    <div class="poll-name-wrap">
+                      <label class="fl">Your Name</label>
+                      <input class="fi" type="text" id="poll-voter-name" placeholder="e.g. Sarah" />
+                    </div>
+                  </div>
+                  <div class="poll-dates-list" id="poll-dates-grid"></div>
+                  <button class="btn btn-pink" onclick="submitPollVote()" style="height:42px; margin-top:8px;">Submit Availability</button>
+                </div>
+                <div class="poll-submitted" id="poll-submitted-msg">
+                  <h4>✓ Vote recorded!</h4>
+                  <p>Your availability is saved. Corey will confirm the date once everyone has voted.</p>
+                  <button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="document.getElementById('poll-submitted-msg').style.display='none';document.getElementById('poll-vote-form').style.display='block';">Change my vote</button>
+                </div>
+                <div id="poll-public-results" style="display:none; margin-top:24px;">
+                  <div style="font-size:0.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;">Current Standings</div>
+                  <div class="poll-results-grid" id="poll-results-public"></div>
+                </div>
               </div>
-              <div class="fg">
-                <label class="fl">Your Name</label>
-                <input class="fi" type="text" id="score-voter-name" placeholder="e.g. Corey" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ── ACCORDION: RECOMMENDATIONS (always visible, default closed) ── -->
+        <div class="accordion-wrap" id="acc-recs">
+          <button class="accordion-header" onclick="toggleAccordion('acc-recs')">
+            <span class="acc-icon">📚</span>
+            <span class="acc-title">Member Recommendations</span>
+            <span class="acc-count" id="recs-count-badge" style="display:none;"></span>
+            <span class="acc-chevron">▾</span>
+          </button>
+          <div class="accordion-body">
+            <div class="accordion-body-inner">
+              <p style="font-size:0.84rem;color:var(--muted);margin-bottom:16px;">Books the group wants to read next.</p>
+              <div class="recs-list" id="recs-list">
+                <div class="recs-empty">No recommendations yet — be the first!</div>
               </div>
-              <button class="btn btn-pink" onclick="submitMemberScore()" style="margin-top:4px;">Submit My Score ★</button>
-            </div>
-            <div class="scoring-submitted" id="scoring-submitted-msg">
-              <h4>✓ Score recorded!</h4>
-              <p id="scoring-submitted-text">Thanks! Your score has been saved.</p>
-              <button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="showScoringForm()">Change my score</button>
-            </div>
-            <div id="scoring-results-pub" style="display:none; margin-top:20px; padding-top:16px; border-top:1px solid var(--border);">
-              <div class="score-who-label">Scores so far</div>
-              <div class="score-voter-list" id="scoring-voter-list-pub"></div>
-              <div id="scoring-avg-pub"></div>
+              <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+                <div style="font-family:'DM Serif Display',serif;font-size:1.05rem;color:var(--dark);margin-bottom:14px;">✚ Recommend a Book</div>
+                <form id="rec-form" onsubmit="postRec(event)">
+                  <div class="form-row">
+                    <div class="fg"><label class="fl">Book Title *</label><input class="fi" type="text" id="rec-title" placeholder="e.g. The Midnight Library" required /></div>
+                    <div class="fg"><label class="fl">Author</label><input class="fi" type="text" id="rec-author" placeholder="e.g. Matt Haig" /></div>
+                  </div>
+                  <div class="fg"><label class="fl">Your Name</label><input class="fi" type="text" id="rec-name" placeholder="Who's recommending?" /></div>
+                  <div class="fg"><label class="fl">Your Pitch</label><textarea class="fta" id="rec-why" placeholder="Why should we read it?"></textarea></div>
+                  <button type="submit" class="btn btn-pink">Post Recommendation ✚</button>
+                </form>
+              </div>
+              <div class="unsub-bar" style="margin-top:16px;">
+                <p>Need to step away? No hard feelings.</p>
+                <a id="unsub-link" href="#" class="unsub-link" onclick="handleUnsub(event)">Unsubscribe</a>
+              </div>
             </div>
           </div>
-        </div>
-
-        <!-- Recommendations List -->
-        <div class="recs-section">
-          <h3>📚 Member Recommendations</h3>
-          <p class="recs-sub">Books the group wants to read next — submitted by members.</p>
-          <div class="recs-list" id="recs-list">
-            <div class="recs-empty">No recommendations yet — be the first to add one below!</div>
-          </div>
-        </div>
-
-        <!-- Recommend a Book Form -->
-        <div class="form-card">
-          <h3>✚ Recommend a Book</h3>
-          <p class="form-sub">Have a great read in mind for the group? Post it here and it'll show up instantly above.</p>
-          <form id="rec-form" onsubmit="postRec(event)">
-            <div class="form-row">
-              <div class="fg"><label class="fl">Book Title *</label><input class="fi" type="text" id="rec-title" placeholder="e.g. The Midnight Library" required /></div>
-              <div class="fg"><label class="fl">Author</label><input class="fi" type="text" id="rec-author" placeholder="e.g. Matt Haig" /></div>
-            </div>
-            <div class="fg"><label class="fl">Your Name</label><input class="fi" type="text" id="rec-name" placeholder="Who's recommending?" /></div>
-            <div class="fg"><label class="fl">Your Pitch</label><textarea class="fta" id="rec-why" placeholder="Why should we read it?"></textarea></div>
-            <button type="submit" class="btn btn-pink">Post Recommendation ✚</button>
-          </form>
-        </div>
-        <div class="unsub-bar">
-          <p>Need to step away for a while? No hard feelings — you can remove yourself from emails and invites.</p>
-          <a id="unsub-link" href="#" class="unsub-link" onclick="handleUnsub(event)">Unsubscribe</a>
         </div>
       </div>
     </div>
@@ -1980,9 +2040,14 @@ async function loadRecommendations() {
 }
 
 function renderRecommendations(recs) {
-  const list = document.getElementById('recs-list');
+  const list  = document.getElementById('recs-list');
+  const badge = document.getElementById('recs-count-badge');
+  if (badge) {
+    if (recs.length) { badge.textContent = recs.length; badge.style.display = ''; }
+    else badge.style.display = 'none';
+  }
   if (!recs.length) {
-    list.innerHTML = '<div class="recs-empty">No recommendations yet — be the first to add one below!</div>';
+    list.innerHTML = '<div class="recs-empty">No recommendations yet — be the first!</div>';
     return;
   }
   list.innerHTML = recs.map(r => {
@@ -2033,45 +2098,40 @@ function handleUnsub(e) {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  STAR RATING HELPERS
+//  ACCORDION
 // ════════════════════════════════════════════════════════════════
-let _memberScore = 0;
-
-function renderStarInput() {
-  const container = document.getElementById('score-stars-input');
-  if (!container) return;
-  container.innerHTML = [1,2,3,4,5].map(n => `
-    <button class="star-btn${_memberScore >= n ? ' lit' : ''}"
-            onclick="setStarRating(${n})"
-            onmouseover="previewStars(${n})"
-            onmouseout="resetStarPreview()"
-            title="${n} star${n>1?'s':''}">★</button>`).join('');
+function toggleAccordion(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('open');
 }
 
-function setStarRating(n) {
-  _memberScore = n;
-  renderStarInput();
-  const labels = ['','😕 Not for me (1)','😐 It was okay (2)','🙂 Pretty good (3)','😊 Really liked it (4)','🤩 Loved it! (5)'];
-  const el = document.getElementById('score-selected-label');
-  if (el) el.textContent = labels[n] || '';
+function openAccordion(id) {
+  const el = document.getElementById(id);
+  if (el) { el.style.display = 'block'; el.classList.add('open'); }
 }
 
-function previewStars(n) {
-  document.querySelectorAll('#score-stars-input .star-btn').forEach((btn, i) => {
-    btn.classList.toggle('lit', i < n);
-  });
+function closeAccordionWrap(id) {
+  const el = document.getElementById(id);
+  if (el) { el.style.display = 'none'; el.classList.remove('open'); }
 }
 
-function resetStarPreview() {
-  document.querySelectorAll('#score-stars-input .star-btn').forEach((btn, i) => {
-    btn.classList.toggle('lit', i < _memberScore);
-  });
+// ════════════════════════════════════════════════════════════════
+//  STAR DISPLAY HELPERS
+// ════════════════════════════════════════════════════════════════
+
+// Partial-fill star HTML — works in both light and dark contexts
+function starsHtml(score, fontSize) {
+  const pct = (Math.max(0, Math.min(5, parseFloat(score) || 0)) / 5 * 100).toFixed(1);
+  const sizeStyle = fontSize ? `font-size:${fontSize};` : '';
+  return `<span class="stars-outer" style="${sizeStyle}"><span class="stars-bg">★★★★★</span><span class="stars-fg" style="width:${pct}%">★★★★★</span></span>`;
 }
 
-function starsHtml(score) {
-  const full  = Math.round(score);
-  const empty = 5 - full;
-  return '★'.repeat(Math.max(0, full)) + '☆'.repeat(Math.max(0, empty));
+// Update the live star fill bar as the user types a score
+function updateScoreVisual(value) {
+  const bar = document.getElementById('score-fill-bar');
+  if (!bar) return;
+  const pct = (Math.max(0, Math.min(5, parseFloat(value) || 0)) / 5 * 100).toFixed(1);
+  bar.style.width = pct + '%';
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -2079,25 +2139,23 @@ function starsHtml(score) {
 // ════════════════════════════════════════════════════════════════
 function renderPublicScoring() {
   if (!DATA.scoring) return;
-  const s   = DATA.scoring;
-  const sec = document.getElementById('scoring-section');
-  if (!sec) return;
+  const s = DATA.scoring;
 
-  if (!s.active) { sec.style.display = 'none'; return; }
-  sec.style.display = 'block';
+  if (!s.active) { closeAccordionWrap('acc-scoring'); return; }
+  openAccordion('acc-scoring');
 
-  const titleEl = document.getElementById('scoring-book-title-pub');
-  if (titleEl) titleEl.textContent = `📖 Rate "${s.bookTitle}"`;
+  // Update accordion header title
+  const accTitle = document.getElementById('scoring-acc-title');
+  if (accTitle) accTitle.textContent = `Rate "${s.bookTitle}"`;
 
   // Reset form to fresh state
   const form = document.getElementById('scoring-form');
   const conf = document.getElementById('scoring-submitted-msg');
   if (form) form.style.display = 'block';
   if (conf) conf.style.display = 'none';
-  _memberScore = 0;
-  renderStarInput();
-  const lbl = document.getElementById('score-selected-label');
-  if (lbl) lbl.textContent = '';
+  const scoreInput = document.getElementById('score-voter-score');
+  if (scoreInput) scoreInput.value = '';
+  updateScoreVisual(0);
 
   // Results panel
   const resultsDiv = document.getElementById('scoring-results-pub');
@@ -2126,18 +2184,21 @@ function renderPublicScoring() {
 
 async function submitMemberScore() {
   const nameEl  = document.getElementById('score-voter-name');
-  const name    = nameEl ? nameEl.value.trim() : '';
-  if (!name)         { toast('Please enter your name!'); return; }
-  if (!_memberScore) { toast('Please tap a star to rate the book!'); return; }
+  const scoreEl = document.getElementById('score-voter-score');
+  const name    = nameEl  ? nameEl.value.trim()  : '';
+  const rawScore = scoreEl ? parseFloat(scoreEl.value) : NaN;
+  if (!name)                            { toast('Please enter your name!'); return; }
+  if (isNaN(rawScore) || rawScore < 1 || rawScore > 5) { toast('Please enter a score between 1 and 5.'); return; }
+  const memberScore = Math.round(rawScore * 100) / 100;
 
   const s = DATA.scoring;
 
   // Upsert: replace existing vote from same person
   const existIdx = s.scores.findIndex(v => v.name.toLowerCase() === name.toLowerCase());
   if (existIdx !== -1) {
-    s.scores[existIdx].score = _memberScore;
+    s.scores[existIdx].score = memberScore;
   } else {
-    s.scores.push({ name, score: _memberScore });
+    s.scores.push({ name, score: memberScore });
   }
 
   await saveScoringSession();
@@ -2145,7 +2206,7 @@ async function submitMemberScore() {
   await loadScoringSession();
 
   const textEl = document.getElementById('scoring-submitted-text');
-  if (textEl) textEl.textContent = `You gave "${s.bookTitle}" ${_memberScore} star${_memberScore>1?'s':''}! ✨`;
+  if (textEl) textEl.textContent = `You gave "${s.bookTitle}" a ${memberScore}! ✨`;
 
   const form = document.getElementById('scoring-form');
   const conf = document.getElementById('scoring-submitted-msg');
@@ -2180,10 +2241,9 @@ function showScoringForm() {
   const conf = document.getElementById('scoring-submitted-msg');
   if (form) form.style.display = 'block';
   if (conf) conf.style.display = 'none';
-  _memberScore = 0;
-  renderStarInput();
-  const lbl = document.getElementById('score-selected-label');
-  if (lbl) lbl.textContent = '';
+  const scoreInput = document.getElementById('score-voter-score');
+  if (scoreInput) scoreInput.value = '';
+  updateScoreVisual(0);
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -2302,7 +2362,7 @@ function openBookModal(book) {
   document.getElementById('bm-meta').textContent   = book.date;
   document.getElementById('bm-score').textContent  = book.rating.toFixed(2);
   const starsEl = document.getElementById('bm-stars');
-  if (starsEl) starsEl.textContent = starsHtml(book.rating);
+  if (starsEl) starsEl.innerHTML = starsHtml(book.rating, '1.4rem');
 
   const scoresList = document.getElementById('bm-scores-list');
   const scores     = book.scores || [];
@@ -2370,15 +2430,18 @@ if (!DATA.poll) {
 // ── Render public poll section ────────────────────────────────
 function renderPublicPoll() {
   const poll = DATA.poll;
-  const sec  = document.getElementById('poll-section');
 
-  // Poll lives inside the members area — only show when active
+  // Poll accordion only shown when active
   if (!poll.active || !poll.dates.length) {
-    sec.style.display = 'none';
+    closeAccordionWrap('acc-poll');
     return;
   }
 
-  sec.style.display = 'block';
+  openAccordion('acc-poll');
+
+  // Update accordion header title
+  const accTitle = document.getElementById('poll-acc-title');
+  if (poll.title && accTitle) accTitle.textContent = poll.title;
 
   if (poll.title) document.getElementById('poll-public-title').textContent = poll.title;
 
