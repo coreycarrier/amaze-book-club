@@ -181,10 +181,11 @@
     .rec-by strong { color:var(--pink); }
     .recs-empty { text-align:center; padding:32px; color:var(--muted); font-size:0.88rem; background:var(--warm-white); border:1px solid var(--border); border-radius:14px; }
 
-    .unsub-bar { background:var(--blush); border:1px solid #EADED8; border-radius:12px; padding:18px 24px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
-    .unsub-bar p { font-size:0.84rem; color:var(--muted); font-style:italic; }
-    .unsub-link { font-family:'Inter',sans-serif; color:var(--coral); border:1.5px solid var(--coral); background:transparent; padding:7px 16px; border-radius:8px; font-size:0.8rem; font-weight:600; cursor:pointer; text-decoration:none; transition:all .14s; white-space:nowrap; }
-    .unsub-link:hover { background:var(--coral); color:#fff; }
+    .unsub-link { font-family:'Inter',sans-serif; color:var(--muted); background:transparent; border:none; padding:0; font-size:0.8rem; font-weight:500; cursor:pointer; text-decoration:none; transition:color .14s; white-space:nowrap; }
+    .unsub-link:hover { color:var(--coral); }
+    .members-footer-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:18px 4px 4px; border-top:1px solid var(--border); margin-top:8px; }
+    .wa-text-link { display:inline-flex; align-items:center; gap:7px; color:#1A7A4A; font-size:0.84rem; font-weight:600; text-decoration:none; transition:color .14s; }
+    .wa-text-link:hover { color:#25D366; }
 
     /* ── ADMIN PANEL ── */
     #admin-area { background:var(--admin-bg); }
@@ -623,18 +624,6 @@
       <div id="members-content">
         <div class="members-grid" id="members-grid"></div>
 
-        <!-- WhatsApp — members only -->
-        <div class="community-card" style="margin-bottom:24px;">
-          <div>
-            <h3>Group Chat 💬</h3>
-            <p>We chat, share recs, and send memes between meetings in our WhatsApp group.</p>
-          </div>
-          <a href="https://chat.whatsapp.com/REPLACE_WITH_YOUR_INVITE_LINK" class="wa-btn" target="_blank" rel="noopener">
-            <svg class="wa-svg" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.558 4.122 1.533 5.856L.057 23.776a.5.5 0 00.608.637l6.109-1.599A11.953 11.953 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.796 9.796 0 01-4.997-1.369l-.358-.213-3.712.972.988-3.612-.233-.37A9.818 9.818 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
-            Join our WhatsApp
-          </a>
-        </div>
-
         <!-- ── ACCORDION: BOOK SCORING (shown when session active) ── -->
         <div class="accordion-wrap" id="acc-scoring" style="display:none;">
           <button class="accordion-header" onclick="toggleAccordion('acc-scoring')">
@@ -749,13 +738,20 @@
                   <button type="submit" class="btn btn-pink">Post Recommendation ✚</button>
                 </form>
               </div>
-              <div class="unsub-bar" style="margin-top:16px;">
-                <p>Need to step away? No hard feelings.</p>
-                <a id="unsub-link" href="#" class="unsub-link" onclick="handleUnsub(event)">Unsubscribe</a>
-              </div>
             </div>
           </div>
         </div>
+
+        <!-- Bottom utility bar — WhatsApp + Unsubscribe -->
+        <!-- 👇 PASTE YOUR WHATSAPP INVITE LINK BELOW (replace the URL) -->
+        <div class="members-footer-bar">
+          <a href="https://chat.whatsapp.com/REPLACE_WITH_YOUR_INVITE_LINK" class="wa-text-link" target="_blank" rel="noopener">
+            <svg style="width:16px;height:16px;fill:#25D366;flex-shrink:0;" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.558 4.122 1.533 5.856L.057 23.776a.5.5 0 00.608.637l6.109-1.599A11.953 11.953 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.796 9.796 0 01-4.997-1.369l-.358-.213-3.712.972.988-3.612-.233-.37A9.818 9.818 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
+            Join our WhatsApp group
+          </a>
+          <a id="unsub-link" href="#" class="unsub-link" onclick="handleUnsub(event)">Unsubscribe</a>
+        </div>
+
       </div>
     </div>
   </div>
@@ -854,6 +850,7 @@
             <button class="btn-act btn-act-green" onclick="sendCalendarInvite()">📅 Send Calendar Invite to All</button>
           </div>
         </div>
+
       </div>
 
       <!-- TAB: ADD BOOK -->
@@ -1186,6 +1183,25 @@ async function loadPollFromSupabase() {
 }
 
 // ════════════════════════════════════════════════════════════════
+//  SUPABASE: RSVP (auto-synced from Google Calendar via Apps Script)
+// ════════════════════════════════════════════════════════════════
+async function loadRsvpFromSupabase() {
+  try {
+    const { data, error } = await db.from('meeting_rsvp').select('*').eq('id','current').maybeSingle();
+    if (error) throw error;
+    if (data && data.rsvp) {
+      DATA.rsvp = data.rsvp;
+      renderHero();
+      // Re-render member grid if already unlocked
+      const grid = document.getElementById('members-grid');
+      if (grid && grid.children.length > 0) renderPublicMembers();
+    }
+  } catch(e) {
+    // Table doesn't exist yet — silently fall back to empty RSVP
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
 //  SUPABASE: BOOKS TABLE
 // ════════════════════════════════════════════════════════════════
 async function loadBooksFromSupabase() {
@@ -1327,9 +1343,9 @@ const DEFAULT_MEMBERS = [
 ];
 
 const DEFAULT_MEETING = {
-  book:"Heart the Lover", author:"Lily King", isbn:"9780802165176",
-  date:"Tue, April 14, 2026", time:"7:00 – 9:00 PM",
-dateISO:"20260414T190000", dateISOend:"20260414T210000"
+  book:"Strangers", author:"Belle Burden", isbn:"",
+  date:"TBD", time:"7:00 – 9:00 PM",
+  dateISO:"", dateISOend:""
 };
 
 const DEFAULT_BOOKS = [
@@ -1365,7 +1381,7 @@ function loadData() {
       return d;
     }
   } catch(e) {}
-  return { members: DEFAULT_MEMBERS, meeting: DEFAULT_MEETING, books: DEFAULT_BOOKS };
+  return { members: DEFAULT_MEMBERS, meeting: DEFAULT_MEETING, books: DEFAULT_BOOKS, rsvp: {} };
 }
 
 function saveData() {
@@ -1377,33 +1393,16 @@ let DATA = loadData();
 // ════════════════════════════════════════════════════════════════
 //  RENDER HERO
 // ════════════════════════════════════════════════════════════════
-// RSVP status synced from Google Calendar — "Book Club: Heart the Lover" (Apr 14, 2026)
-// g = accepted, m = tentative/maybe, d = declined, p = no reply
-const RSVP_STATUS = {
-  "corey.fink@gmail.com":          "g",
-  "stacylynn431@gmail.com":        "g",
-  "michellelandver@gmail.com":     "g",
-  "samanthalmansfield@gmail.com":  "g",
-  "jenniferchristi@gmail.com":     "g",
-  "apotter.177@gmail.com":         "g",
-  "allisonberens1@gmail.com":      "g",
-  "marta.topran@gmail.com":        "g",
-  "celia.tanya@gmail.com":         "g",
-  "lesleyolenik@livenation.com":   "m",
-  "annaplumley@livenation.com":    "m",
-  "efratpoulson@gmail.com":        "d",
-  "ashleytinnes@gmail.com":        "p",
-  "rachel.hazlehurst@gmail.com":   "p",
-  "sbassinson@gmail.com":          "p",
-  "lindsay.levitt@gmail.com":      "p",
-  "packey.carrier@gmail.com":      "p",
-  "kmpaige4@gmail.com":            "p",
-  "dylancmoore@gmail.com":         "p",
-  "juliacar@gmail.com":            "p",
-  "rradford77@gmail.com":          "p",
-  "jessemlerner@gmail.com":        "p",
-  "kelliequ@gmail.com":            "p"
-};
+// RSVP — stored in DATA.rsvp, managed via the admin Meeting tab
+// g = going, m = maybe, d = declined, p = no reply (default)
+// ════════════════════════════════════════════════════════════════
+function getRsvp(email) {
+  return (DATA.rsvp || {})[email.toLowerCase()] || 'p';
+}
+
+function hasMeetingDate() {
+  return DATA.meeting && DATA.meeting.date && DATA.meeting.date !== 'TBD';
+}
 
 function renderHero() {
   const m = DATA.meeting;
@@ -1424,17 +1423,22 @@ function renderHero() {
     fbEl.style.display  = 'flex';
   }
 
-  // RSVP counts
-  let g=0, maybe=0, d=0, tbd=0;
-  DATA.members.forEach(mem => {
-    const st = RSVP_STATUS[mem.email.toLowerCase()] || 'p';
-    if (st==='g') g++; else if (st==='m') maybe++; else if (st==='d') d++; else tbd++;
-  });
-  document.getElementById('rsvp-row').innerHTML =
-    (g    ? `<span class="rsvp-chip rc-yes">✓ ${g} going</span>` : '') +
-    (maybe? `<span class="rsvp-chip rc-maybe">~ ${maybe} maybe</span>` : '') +
-    (d    ? `<span class="rsvp-chip rc-no">✗ ${d} no</span>` : '') +
-    (tbd  ? `<span class="rsvp-chip rc-tbd">${tbd} no reply</span>` : '');
+  // RSVP counts — only show when a date is confirmed
+  const rsvpRow = document.getElementById('rsvp-row');
+  if (!hasMeetingDate()) {
+    rsvpRow.innerHTML = '<span class="rsvp-chip rc-tbd">📅 Date TBD</span>';
+  } else {
+    let g=0, maybe=0, d=0, pending=0;
+    DATA.members.forEach(mem => {
+      const st = getRsvp(mem.email);
+      if (st==='g') g++; else if (st==='m') maybe++; else if (st==='d') d++; else pending++;
+    });
+    rsvpRow.innerHTML =
+      (g      ? `<span class="rsvp-chip rc-yes">✓ ${g} going</span>`       : '') +
+      (maybe  ? `<span class="rsvp-chip rc-maybe">~ ${maybe} maybe</span>` : '') +
+      (d      ? `<span class="rsvp-chip rc-no">✗ ${d} no</span>`           : '') +
+      (pending? `<span class="rsvp-chip rc-tbd">${pending} no reply</span>` : '');
+  }
 
   document.getElementById('pill-members').textContent = DATA.members.length;
 }
@@ -1521,10 +1525,11 @@ const PALETTES = [
 function renderPublicMembers() {
   const lbl = { g:'✓ Going', m:'~ Maybe', d:'✗ Declined', p:'–' };
   const cls = { g:'ms-g', m:'ms-m', d:'ms-d', p:'ms-p' };
+  const showRsvp = hasMeetingDate();
   document.getElementById('members-grid').innerHTML = DATA.members.map((m,i) => {
     const init = m.name.split(' ').map(w=>w[0]).slice(0,2).join('');
     const pal  = PALETTES[i % PALETTES.length];
-    const st   = RSVP_STATUS[m.email.toLowerCase()] || 'p';
+    const st   = getRsvp(m.email);
     const p    = m.profile || {};
     const hasProfile = p.job || p.family || p.how_heard || p.fav_book || p.fav_genre || p.photo;
     return `
@@ -1534,7 +1539,7 @@ function renderPublicMembers() {
           : `<div class="m-avatar" style="background:linear-gradient(135deg,${pal[0]},${pal[1]})">${init}</div>`
         }
         <div class="m-name">${m.name}</div>
-        <span class="m-status ${cls[st]}">${lbl[st]}</span>
+        ${showRsvp ? `<span class="m-status ${cls[st]}">${lbl[st]}</span>` : ''}
         <div class="m-tap-hint">${hasProfile ? '👤 View profile' : 'tap to view'}</div>
       </div>`;
   }).join('');
@@ -2790,7 +2795,8 @@ if (!DATA.scoring) {
 }
 renderHero();
 renderBooks();
-loadBooksFromSupabase(); // async: overrides defaults if Supabase table has data
+loadBooksFromSupabase();  // async: overrides defaults if Supabase table has data
+loadRsvpFromSupabase();   // async: pulls latest RSVP responses from Google Calendar sync
 // Poll and Scoring only render after member login (they live inside the members area)
 </script>
 </body>
