@@ -434,6 +434,67 @@
       .admin-tabs { gap:2px; }
       .profile-top { flex-direction:column; text-align:center; }
     }
+
+    /* ── PULSE ANIMATION ── */
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+
+    /* ── STAR RATING INPUT ── */
+    .star-row { display:flex; gap:4px; margin:10px 0 4px; }
+    .star-btn {
+      background:none; border:none; cursor:pointer; font-size:2.2rem;
+      color:#DDD; transition:color .1s, transform .1s; padding:2px 3px; line-height:1;
+    }
+    .star-btn.lit { color:#F5C518; }
+    .star-btn:hover { transform:scale(1.15); }
+
+    /* ── SCORING WIDGET (members) ── */
+    #scoring-section .score-form-card { background:var(--warm-white); border:1px solid var(--border); border-radius:16px; padding:28px; }
+    .score-who-label { font-size:0.72rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+    .score-voter-list { display:flex; flex-direction:column; gap:8px; }
+    .score-voter-row { display:flex; align-items:center; gap:10px; font-size:0.85rem; }
+    .score-voter-name { flex:1; color:var(--text); font-weight:500; }
+    .score-stars-gold { color:#F5C518; font-size:0.85rem; letter-spacing:1px; }
+    .score-avg-badge { display:inline-flex; align-items:center; gap:6px; background:var(--amber-lt); border:1px solid #F0DFC0; color:var(--amber); font-size:0.9rem; font-weight:700; padding:7px 16px; border-radius:20px; margin-top:14px; }
+    .scoring-submitted { background:var(--green-lt); border:1px solid #A8DEC0; border-radius:14px; padding:22px 24px; text-align:center; display:none; }
+    .scoring-submitted h4 { font-family:'DM Serif Display',serif; font-size:1.2rem; color:var(--green); margin-bottom:6px; }
+    .scoring-submitted p { font-size:0.85rem; color:#2A6A4A; }
+
+    /* ── BOOK DETAIL MODAL ── */
+    .book-modal-overlay {
+      position:fixed; inset:0; background:rgba(28,20,16,.55); backdrop-filter:blur(4px);
+      z-index:500; display:flex; align-items:center; justify-content:center;
+      padding:24px; opacity:0; pointer-events:none; transition:opacity .22s;
+    }
+    .book-modal-overlay.open { opacity:1; pointer-events:all; }
+    .book-modal-card {
+      background:var(--warm-white); border:1px solid var(--border); border-radius:24px;
+      width:100%; max-width:480px; max-height:88vh; overflow-y:auto;
+      box-shadow:0 24px 80px rgba(28,20,16,.22); padding:36px; position:relative;
+      transform:translateY(16px) scale(.98); transition:transform .22s;
+    }
+    .book-modal-overlay.open .book-modal-card { transform:translateY(0) scale(1); }
+    .book-modal-close {
+      position:absolute; top:18px; right:18px; background:var(--border);
+      border:none; border-radius:50%; width:32px; height:32px; font-size:0.85rem;
+      color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center;
+      transition:background .15s;
+    }
+    .book-modal-close:hover { background:var(--pink-lt); color:var(--pink); }
+    .book-modal-eyebrow { font-size:0.68rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--pink); margin-bottom:8px; }
+    .book-modal-title { font-family:'DM Serif Display',serif; font-style:italic; font-size:1.7rem; color:var(--dark); line-height:1.15; margin-bottom:4px; }
+    .book-modal-meta { font-size:0.82rem; color:var(--muted); margin-bottom:20px; }
+    .book-modal-score-row { display:flex; align-items:baseline; gap:10px; padding:16px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); margin-bottom:20px; }
+    .book-modal-score-big { font-family:'DM Serif Display',serif; font-size:3rem; color:var(--pink); line-height:1; }
+    .book-modal-score-label { font-size:0.75rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+    .bm-section-label { font-size:0.72rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+    .bm-scores-list { display:flex; flex-direction:column; gap:8px; }
+    .bm-score-row { display:flex; align-items:center; gap:10px; background:var(--cream); border:1px solid var(--border); border-radius:10px; padding:10px 14px; }
+    .bm-score-name { flex:1; font-size:0.88rem; color:var(--text); font-weight:500; }
+    .bm-score-stars { color:#F5C518; font-size:0.85rem; letter-spacing:1px; }
+    .bm-score-num { font-size:0.82rem; color:var(--muted); }
+    .bm-no-scores { text-align:center; padding:24px 0 8px; color:var(--muted); font-size:0.85rem; font-style:italic; line-height:1.6; }
+    .book-row { cursor:pointer; }
+    .book-row:hover .book-title { color:var(--pink); }
   </style>
 </head>
 <body>
@@ -578,6 +639,36 @@
           </div>
         </div>
 
+        <!-- Live Scoring Widget — members only, only shown when active -->
+        <div id="scoring-section" style="display:none; margin-bottom:24px;">
+          <div class="score-form-card">
+            <h3 id="scoring-book-title-pub" style="font-family:'DM Serif Display',serif;font-size:1.35rem;color:var(--dark);margin-bottom:4px;">📖 Rate Tonight's Book</h3>
+            <p class="form-sub">Give your honest rating — 1 star (painful) to 5 stars (loved it).</p>
+            <div id="scoring-form">
+              <div class="fg">
+                <label class="fl">Your Rating</label>
+                <div class="star-row" id="score-stars-input"></div>
+                <div id="score-selected-label" style="font-size:0.82rem;color:var(--muted);min-height:18px;margin-bottom:8px;"></div>
+              </div>
+              <div class="fg">
+                <label class="fl">Your Name</label>
+                <input class="fi" type="text" id="score-voter-name" placeholder="e.g. Corey" />
+              </div>
+              <button class="btn btn-pink" onclick="submitMemberScore()" style="margin-top:4px;">Submit My Score ★</button>
+            </div>
+            <div class="scoring-submitted" id="scoring-submitted-msg">
+              <h4>✓ Score recorded!</h4>
+              <p id="scoring-submitted-text">Thanks! Your score has been saved.</p>
+              <button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="showScoringForm()">Change my score</button>
+            </div>
+            <div id="scoring-results-pub" style="display:none; margin-top:20px; padding-top:16px; border-top:1px solid var(--border);">
+              <div class="score-who-label">Scores so far</div>
+              <div class="score-voter-list" id="scoring-voter-list-pub"></div>
+              <div id="scoring-avg-pub"></div>
+            </div>
+          </div>
+        </div>
+
         <!-- Recommendations List -->
         <div class="recs-section">
           <h3>📚 Member Recommendations</h3>
@@ -641,6 +732,7 @@
         <button class="admin-tab" onclick="showTab('tab-meeting',this)">📅 Next Meeting</button>
         <button class="admin-tab" onclick="showTab('tab-books',this)">📚 Add Book</button>
         <button class="admin-tab" onclick="showTab('tab-poll',this)">📊 Date Poll</button>
+        <button class="admin-tab" onclick="showTab('tab-scoring',this)">🌟 Live Scoring</button>
       </div>
 
       <!-- TAB: MEMBERS -->
@@ -786,7 +878,68 @@
 
       </div><!-- /tab-poll -->
 
+      <!-- TAB: LIVE SCORING -->
+      <div id="tab-scoring" class="admin-panel">
+
+        <!-- Setup: start session -->
+        <div class="admin-card" id="scoring-setup-card">
+          <h4>🌟 Start a Live Scoring Session</h4>
+          <p class="admin-card-sub">Activate scoring for tonight's book. Members will see a star-rating widget when they log in. They can submit (and update) their score throughout the night.</p>
+          <div class="form-row" style="margin-bottom:16px;">
+            <div class="fg"><label class="afl">Book Title</label><input class="afi" type="text" id="score-book-title" placeholder="e.g. Heart the Lover" /></div>
+            <div class="fg"><label class="afl">Date Read (e.g. Apr 2026)</label><input class="afi" type="text" id="score-book-date" placeholder="Apr 2026" /></div>
+          </div>
+          <button class="btn-act btn-act-blue" onclick="startScoringSession()">🌟 Activate Scoring</button>
+        </div>
+
+        <!-- Active session info -->
+        <div class="admin-card" id="scoring-active-card" style="display:none;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+            <div style="width:10px;height:10px;background:#5EBD8A;border-radius:50%;animation:pulse 1.5s infinite;"></div>
+            <h4 style="margin-bottom:0;">Live: <span id="scoring-active-title" style="color:var(--admin-acc);"></span></h4>
+          </div>
+          <p class="admin-card-sub">Share the site with your group — scores update automatically. Finalize when everyone has voted to compute the average and save the book.</p>
+          <div class="poll-toggle" style="margin-bottom:20px;">
+            <label class="toggle-switch"><input type="checkbox" id="scoring-show-results-toggle" onchange="toggleScoringResultsAdmin(this.checked)"><span class="toggle-slider"></span></label>
+            <span class="toggle-label">Show individual scores to members in real-time</span>
+          </div>
+          <div id="admin-scoring-scores-list" style="margin-bottom:12px;"></div>
+          <div id="admin-scoring-avg" style="margin-bottom:20px;"></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-act btn-act-green" onclick="finalizeScoringSession()">✓ Finalize &amp; Add to Book List</button>
+            <button class="btn-act btn-act-danger" onclick="cancelScoringSession()">✕ Cancel Session</button>
+          </div>
+        </div>
+
+        <!-- Reading history -->
+        <div class="admin-card">
+          <h4>Reading History</h4>
+          <p class="admin-card-sub">All logged books — most recent first. Use the <strong>📚 Add Book</strong> tab to manually log a book without live scoring.</p>
+          <div id="admin-books-list-scoring" style="display:flex;flex-direction:column;gap:0;"></div>
+        </div>
+
+      </div><!-- /tab-scoring -->
+
     </div><!-- /admin-content -->
+  </div>
+</div>
+
+<!-- ── BOOK DETAIL MODAL ── -->
+<div class="book-modal-overlay" id="book-detail-modal" onclick="closeBookModal(event)">
+  <div class="book-modal-card">
+    <button class="book-modal-close" onclick="closeBookModal()">✕</button>
+    <div class="book-modal-eyebrow">📚 Book Rating</div>
+    <div class="book-modal-title" id="bm-title"></div>
+    <div class="book-modal-meta" id="bm-meta"></div>
+    <div class="book-modal-score-row">
+      <div class="book-modal-score-big" id="bm-score"></div>
+      <div>
+        <div style="color:#F5C518;font-size:1.1rem;letter-spacing:2px;" id="bm-stars"></div>
+        <div class="book-modal-score-label">Group Average / 5</div>
+      </div>
+    </div>
+    <div class="bm-section-label">Individual Scores</div>
+    <div class="bm-scores-list" id="bm-scores-list"></div>
   </div>
 </div>
 
@@ -969,6 +1122,94 @@ async function loadPollFromSupabase() {
     }
   } catch(e) {
     console.warn('Could not load poll from Supabase:', e.message);
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  SUPABASE: BOOKS TABLE
+// ════════════════════════════════════════════════════════════════
+async function loadBooksFromSupabase() {
+  try {
+    const { data, error } = await db.from('books').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    if (data && data.length > 0) {
+      DATA.books = data.map(b => ({
+        id:     b.id,
+        title:  b.title,
+        date:   b.date_read,
+        rating: parseFloat(b.rating),
+        scores: b.scores || []
+      }));
+      renderBooks();
+      renderAdminBooksAll();
+    }
+  } catch(e) {
+    console.warn('Books table not ready (run the SQL setup first):', e.message);
+  }
+}
+
+async function saveBookToSupabase(title, dateRead, rating, scores) {
+  try {
+    const { data, error } = await db.from('books').insert({
+      title, date_read: dateRead,
+      rating: parseFloat(rating),
+      scores: scores || []
+    }).select().single();
+    if (error) throw error;
+    return data;
+  } catch(e) {
+    console.warn('Could not save book to Supabase:', e.message);
+    return null;
+  }
+}
+
+async function deleteBookFromSupabase(id) {
+  try {
+    const { error } = await db.from('books').delete().eq('id', id);
+    if (error) throw error;
+  } catch(e) {
+    console.warn('Could not delete book:', e.message);
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  SUPABASE: SCORING SESSION
+// ════════════════════════════════════════════════════════════════
+async function loadScoringSession() {
+  try {
+    const { data, error } = await db.from('scoring_session').select('*').eq('id','active').maybeSingle();
+    if (error) throw error;
+    if (data) {
+      DATA.scoring = {
+        active:      data.active || false,
+        bookTitle:   data.book_title || '',
+        dateRead:    data.date_read  || '',
+        showResults: data.show_results !== false,
+        scores:      data.scores || []
+      };
+    } else {
+      DATA.scoring = { active:false, bookTitle:'', dateRead:'', showResults:true, scores:[] };
+    }
+  } catch(e) {
+    console.warn('Scoring session table not ready:', e.message);
+    DATA.scoring = { active:false, bookTitle:'', dateRead:'', showResults:true, scores:[] };
+  }
+}
+
+async function saveScoringSession() {
+  try {
+    const s = DATA.scoring;
+    await db.from('scoring_session').upsert({
+      id:           'active',
+      book_title:   s.bookTitle,
+      date_read:    s.dateRead,
+      active:       s.active,
+      show_results: s.showResults,
+      scores:       s.scores,
+      updated_at:   new Date().toISOString()
+    });
+  } catch(e) {
+    console.warn('Could not save scoring session:', e.message);
   }
 }
 
@@ -1176,6 +1417,7 @@ function renderBooks() {
   document.getElementById('pill-avg').textContent = avg;
 
   const sorted = getSortedBooks();
+  _sortedBooksForModal = sorted;
   document.getElementById('books-list').innerHTML = sorted.map((b,i) => {
     const pct  = (b.rating/5*100).toFixed(1);
     const tier = b.rating>=3.5?'high':b.rating>=2.5?'mid':'low';
@@ -1184,13 +1426,14 @@ function renderBooks() {
                  : (currentSort === 'score-asc')  ? (n-i)
                  : (currentSort === 'date-asc')   ? (i+1)
                  : (n-i); // date-desc default
+    const hasScores = b.scores && b.scores.length > 0;
     return `
-      <div class="book-row">
+      <div class="book-row" onclick="_openBookByIdx(${i})" title="${hasScores ? 'Click to see individual scores' : 'Click for details'}">
         <span class="book-num">${rowNum}</span>
         <div class="book-swatch sw-${tier}"></div>
         <div class="book-info">
           <div class="book-title">${b.title}</div>
-          <div class="book-meta">${b.date}</div>
+          <div class="book-meta">${b.date}${hasScores ? ` · <span style="color:var(--pink);font-size:0.68rem;">★ ${b.scores.length} scores</span>` : ''}</div>
         </div>
         <div class="book-score-col">
           <div class="score-bar-bg"><div class="score-bar-fill sbf-${tier}" style="width:${pct}%"></div></div>
@@ -1198,6 +1441,12 @@ function renderBooks() {
         </div>
       </div>`;
   }).join('');
+}
+
+function _openBookByIdx(i) {
+  if (_sortedBooksForModal && _sortedBooksForModal[i]) {
+    openBookModal(_sortedBooksForModal[i]);
+  }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1242,8 +1491,10 @@ async function checkMemberPw() {
     await loadProfilesFromSupabase();
     await loadRecommendations();
     await loadPollFromSupabase();
+    await loadScoringSession();
     renderPublicMembers();
     renderPublicPoll();
+    renderPublicScoring();
   } else {
     document.getElementById('pw-err').style.display = 'block';
     document.getElementById('pw-input').value = '';
@@ -1256,11 +1507,13 @@ async function checkAdminPw() {
     document.getElementById('admin-gate').style.display    = 'none';
     document.getElementById('admin-content').style.display = 'block';
     renderAdminMembers();
-    renderAdminBooks();
+    renderAdminBooksAll();
     populateMeetingForm();
     updateEmailList();
     await loadPollFromSupabase();
+    await loadScoringSession();
     restoreAdminPollUI();
+    renderAdminScoring();
   } else {
     document.getElementById('admin-pw-err').style.display = 'block';
     document.getElementById('admin-pw').value = '';
@@ -1667,44 +1920,40 @@ function sendCalendarInvite() {
 // ════════════════════════════════════════════════════════════════
 //  ADMIN: BOOKS
 // ════════════════════════════════════════════════════════════════
-function addBook() {
-  const title  = document.getElementById('b-title').value.trim();
-  const date   = document.getElementById('b-date').value.trim();
-  const rating = parseFloat(document.getElementById('b-rating').value);
+async function addBook() {
+  const title  = (document.getElementById('b-title')?.value  || '').trim();
+  const date   = (document.getElementById('b-date')?.value   || '').trim();
+  const rating = parseFloat(document.getElementById('b-rating')?.value || '');
   if (!title || !date || isNaN(rating) || rating<0 || rating>5) {
     toast('Please fill in all fields. Rating must be 0–5.'); return;
   }
-  DATA.books.unshift({ date, title, rating: Math.round(rating*100)/100 });
+  const rounded = Math.round(rating*100)/100;
+  const newBook = { date, title, rating: rounded, scores: [] };
+  const saved   = await saveBookToSupabase(title, date, rounded, []);
+  if (saved) newBook.id = saved.id;
+  DATA.books.unshift(newBook);
   saveData();
-  document.getElementById('b-title').value  = '';
-  document.getElementById('b-date').value   = '';
-  document.getElementById('b-rating').value = '';
+  if (document.getElementById('b-title'))  document.getElementById('b-title').value  = '';
+  if (document.getElementById('b-date'))   document.getElementById('b-date').value   = '';
+  if (document.getElementById('b-rating')) document.getElementById('b-rating').value = '';
   renderBooks();
-  renderAdminBooks();
+  renderAdminBooksAll();
   toast(`✓ "${title}" added to the reading list!`);
 }
 
-function removeBook(idx) {
-  const title = DATA.books[idx].title;
+async function removeBook(idx) {
+  const book  = DATA.books[idx];
+  const title = book.title;
   if (!confirm(`Remove "${title}" from the book list?`)) return;
+  if (book.id) await deleteBookFromSupabase(book.id);
   DATA.books.splice(idx, 1);
   saveData();
   renderBooks();
-  renderAdminBooks();
+  renderAdminBooksAll();
   toast(`"${title}" removed.`);
 }
 
-function renderAdminBooks() {
-  document.getElementById('admin-books-list').innerHTML = DATA.books.map((b,i) => `
-    <div style="display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,.06);">
-      <div style="flex:1;min-width:0;">
-        <div style="color:#fff;font-size:0.88rem;font-style:italic;font-family:'DM Serif Display',serif;">${b.title}</div>
-        <div style="color:rgba(255,255,255,.35);font-size:0.72rem;">${b.date}</div>
-      </div>
-      <div style="color:rgba(255,255,255,.6);font-size:0.9rem;font-weight:600;min-width:32px;text-align:right;">${b.rating.toFixed(2)}</div>
-      <button class="btn-act btn-act-danger btn-act-sm" onclick="removeBook(${i})">✕</button>
-    </div>`).join('');
-}
+function renderAdminBooks() { renderAdminBooksAll(); }
 
 // ════════════════════════════════════════════════════════════════
 //  TABS
@@ -1781,6 +2030,320 @@ function handleUnsub(e) {
   emailjs.send("service_p3xib6g", "template_35ijgoj", { member_name: name })
     .then(() => toast("Done! Corey has been notified and will remove you shortly."))
     .catch(() => toast("Something went wrong — please try again."));
+}
+
+// ════════════════════════════════════════════════════════════════
+//  STAR RATING HELPERS
+// ════════════════════════════════════════════════════════════════
+let _memberScore = 0;
+
+function renderStarInput() {
+  const container = document.getElementById('score-stars-input');
+  if (!container) return;
+  container.innerHTML = [1,2,3,4,5].map(n => `
+    <button class="star-btn${_memberScore >= n ? ' lit' : ''}"
+            onclick="setStarRating(${n})"
+            onmouseover="previewStars(${n})"
+            onmouseout="resetStarPreview()"
+            title="${n} star${n>1?'s':''}">★</button>`).join('');
+}
+
+function setStarRating(n) {
+  _memberScore = n;
+  renderStarInput();
+  const labels = ['','😕 Not for me (1)','😐 It was okay (2)','🙂 Pretty good (3)','😊 Really liked it (4)','🤩 Loved it! (5)'];
+  const el = document.getElementById('score-selected-label');
+  if (el) el.textContent = labels[n] || '';
+}
+
+function previewStars(n) {
+  document.querySelectorAll('#score-stars-input .star-btn').forEach((btn, i) => {
+    btn.classList.toggle('lit', i < n);
+  });
+}
+
+function resetStarPreview() {
+  document.querySelectorAll('#score-stars-input .star-btn').forEach((btn, i) => {
+    btn.classList.toggle('lit', i < _memberScore);
+  });
+}
+
+function starsHtml(score) {
+  const full  = Math.round(score);
+  const empty = 5 - full;
+  return '★'.repeat(Math.max(0, full)) + '☆'.repeat(Math.max(0, empty));
+}
+
+// ════════════════════════════════════════════════════════════════
+//  PUBLIC: SCORING WIDGET
+// ════════════════════════════════════════════════════════════════
+function renderPublicScoring() {
+  if (!DATA.scoring) return;
+  const s   = DATA.scoring;
+  const sec = document.getElementById('scoring-section');
+  if (!sec) return;
+
+  if (!s.active) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+
+  const titleEl = document.getElementById('scoring-book-title-pub');
+  if (titleEl) titleEl.textContent = `📖 Rate "${s.bookTitle}"`;
+
+  // Reset form to fresh state
+  const form = document.getElementById('scoring-form');
+  const conf = document.getElementById('scoring-submitted-msg');
+  if (form) form.style.display = 'block';
+  if (conf) conf.style.display = 'none';
+  _memberScore = 0;
+  renderStarInput();
+  const lbl = document.getElementById('score-selected-label');
+  if (lbl) lbl.textContent = '';
+
+  // Results panel
+  const resultsDiv = document.getElementById('scoring-results-pub');
+  if (resultsDiv) {
+    if (s.showResults && s.scores.length > 0) {
+      resultsDiv.style.display = 'block';
+      const avg = s.scores.reduce((sum,v) => sum + v.score, 0) / s.scores.length;
+      const voterListEl = document.getElementById('scoring-voter-list-pub');
+      if (voterListEl) {
+        voterListEl.innerHTML = s.scores.map(v => `
+          <div class="score-voter-row">
+            <span class="score-voter-name">${v.name}</span>
+            <span class="score-stars-gold">${starsHtml(v.score)}</span>
+            <span style="font-size:0.78rem;color:var(--muted);min-width:22px;text-align:right;">${v.score}/5</span>
+          </div>`).join('');
+      }
+      const avgEl = document.getElementById('scoring-avg-pub');
+      if (avgEl) {
+        avgEl.innerHTML = `<div class="score-avg-badge">⭐ ${avg.toFixed(2)} avg · ${s.scores.length} vote${s.scores.length>1?'s':''}</div>`;
+      }
+    } else {
+      resultsDiv.style.display = 'none';
+    }
+  }
+}
+
+async function submitMemberScore() {
+  const nameEl  = document.getElementById('score-voter-name');
+  const name    = nameEl ? nameEl.value.trim() : '';
+  if (!name)         { toast('Please enter your name!'); return; }
+  if (!_memberScore) { toast('Please tap a star to rate the book!'); return; }
+
+  const s = DATA.scoring;
+
+  // Upsert: replace existing vote from same person
+  const existIdx = s.scores.findIndex(v => v.name.toLowerCase() === name.toLowerCase());
+  if (existIdx !== -1) {
+    s.scores[existIdx].score = _memberScore;
+  } else {
+    s.scores.push({ name, score: _memberScore });
+  }
+
+  await saveScoringSession();
+  // Reload fresh so any concurrent votes are included
+  await loadScoringSession();
+
+  const textEl = document.getElementById('scoring-submitted-text');
+  if (textEl) textEl.textContent = `You gave "${s.bookTitle}" ${_memberScore} star${_memberScore>1?'s':''}! ✨`;
+
+  const form = document.getElementById('scoring-form');
+  const conf = document.getElementById('scoring-submitted-msg');
+  if (form) form.style.display = 'none';
+  if (conf) conf.style.display = 'block';
+
+  // Show live results if enabled
+  if (DATA.scoring.showResults) {
+    const resultsDiv = document.getElementById('scoring-results-pub');
+    if (resultsDiv) {
+      resultsDiv.style.display = 'block';
+      const avg = DATA.scoring.scores.reduce((sum,v)=>sum+v.score,0)/DATA.scoring.scores.length;
+      const voterListEl = document.getElementById('scoring-voter-list-pub');
+      if (voterListEl) {
+        voterListEl.innerHTML = DATA.scoring.scores.map(v => `
+          <div class="score-voter-row">
+            <span class="score-voter-name">${v.name}</span>
+            <span class="score-stars-gold">${starsHtml(v.score)}</span>
+            <span style="font-size:0.78rem;color:var(--muted);min-width:22px;text-align:right;">${v.score}/5</span>
+          </div>`).join('');
+      }
+      const avgEl = document.getElementById('scoring-avg-pub');
+      if (avgEl) {
+        avgEl.innerHTML = `<div class="score-avg-badge">⭐ ${avg.toFixed(2)} avg · ${DATA.scoring.scores.length} vote${DATA.scoring.scores.length>1?'s':''}</div>`;
+      }
+    }
+  }
+}
+
+function showScoringForm() {
+  const form = document.getElementById('scoring-form');
+  const conf = document.getElementById('scoring-submitted-msg');
+  if (form) form.style.display = 'block';
+  if (conf) conf.style.display = 'none';
+  _memberScore = 0;
+  renderStarInput();
+  const lbl = document.getElementById('score-selected-label');
+  if (lbl) lbl.textContent = '';
+}
+
+// ════════════════════════════════════════════════════════════════
+//  ADMIN: LIVE SCORING
+// ════════════════════════════════════════════════════════════════
+async function startScoringSession() {
+  const title    = (document.getElementById('score-book-title')?.value || '').trim();
+  const dateRead = (document.getElementById('score-book-date')?.value || '').trim();
+  if (!title || !dateRead) { toast('Please fill in the book title and date.'); return; }
+
+  DATA.scoring = { active:true, bookTitle:title, dateRead, showResults:true, scores:[] };
+  await saveScoringSession();
+  renderAdminScoring();
+  toast(`✓ Live scoring activated for "${title}"!`);
+}
+
+async function cancelScoringSession() {
+  if (!confirm('Cancel the scoring session? All votes will be lost.')) return;
+  DATA.scoring = { active:false, bookTitle:'', dateRead:'', showResults:true, scores:[] };
+  await saveScoringSession();
+  renderAdminScoring();
+  renderPublicScoring();
+  toast('Scoring session cancelled.');
+}
+
+async function finalizeScoringSession() {
+  const s = DATA.scoring;
+  if (!s.scores || !s.scores.length) { toast('No scores yet! Wait for members to vote.'); return; }
+
+  const avg        = s.scores.reduce((sum,v) => sum + v.score, 0) / s.scores.length;
+  const roundedAvg = Math.round(avg * 100) / 100;
+
+  const saved  = await saveBookToSupabase(s.bookTitle, s.dateRead, roundedAvg, s.scores);
+  const newBook = {
+    id:     saved ? saved.id : null,
+    title:  s.bookTitle,
+    date:   s.dateRead,
+    rating: roundedAvg,
+    scores: s.scores
+  };
+  DATA.books.unshift(newBook);
+  saveData();
+
+  DATA.scoring = { active:false, bookTitle:'', dateRead:'', showResults:true, scores:[] };
+  await saveScoringSession();
+
+  renderBooks();
+  renderAdminBooksAll();
+  renderAdminScoring();
+  renderPublicScoring();
+  toast(`✓ "${s.bookTitle}" saved with avg ${roundedAvg.toFixed(2)} (${s.scores.length} votes)!`);
+}
+
+async function toggleScoringResultsAdmin(show) {
+  DATA.scoring.showResults = show;
+  await saveScoringSession();
+  renderPublicScoring();
+}
+
+function renderAdminScoring() {
+  const s = DATA.scoring || {};
+
+  const setupCard  = document.getElementById('scoring-setup-card');
+  const activeCard = document.getElementById('scoring-active-card');
+  if (!setupCard || !activeCard) return;
+
+  if (!s.active) {
+    setupCard.style.display  = 'block';
+    activeCard.style.display = 'none';
+    return;
+  }
+
+  setupCard.style.display  = 'none';
+  activeCard.style.display = 'block';
+
+  const titleEl = document.getElementById('scoring-active-title');
+  if (titleEl) titleEl.textContent = s.bookTitle;
+
+  const toggleEl = document.getElementById('scoring-show-results-toggle');
+  if (toggleEl) toggleEl.checked = s.showResults;
+
+  const listEl = document.getElementById('admin-scoring-scores-list');
+  if (listEl) {
+    if (!s.scores || !s.scores.length) {
+      listEl.innerHTML = `<div style="color:rgba(255,255,255,.35);font-size:0.85rem;padding:10px 0;">Waiting for votes… share the site link with your group!</div>`;
+    } else {
+      listEl.innerHTML = s.scores.map(v => `
+        <div class="admin-result-row">
+          <div class="admin-result-date">${v.name}</div>
+          <div style="flex:1;display:flex;align-items:center;gap:8px;">
+            <span style="color:#F5C518;font-size:0.9rem;letter-spacing:1px;">${starsHtml(v.score)}</span>
+            <span style="color:rgba(255,255,255,.5);font-size:0.8rem;">(${v.score}/5)</span>
+          </div>
+        </div>`).join('');
+    }
+  }
+
+  const avgEl = document.getElementById('admin-scoring-avg');
+  if (avgEl) {
+    if (s.scores && s.scores.length) {
+      const avg = s.scores.reduce((sum,v)=>sum+v.score,0)/s.scores.length;
+      avgEl.innerHTML = `<div style="color:var(--admin-acc);font-size:1rem;font-weight:600;padding:8px 0 0;">⭐ ${avg.toFixed(2)} average · ${s.scores.length} vote${s.scores.length>1?'s':''}</div>`;
+    } else {
+      avgEl.innerHTML = '';
+    }
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  BOOK DETAIL MODAL
+// ════════════════════════════════════════════════════════════════
+let _sortedBooksForModal = [];
+
+function openBookModal(book) {
+  document.getElementById('bm-title').textContent  = book.title;
+  document.getElementById('bm-meta').textContent   = book.date;
+  document.getElementById('bm-score').textContent  = book.rating.toFixed(2);
+  const starsEl = document.getElementById('bm-stars');
+  if (starsEl) starsEl.textContent = starsHtml(book.rating);
+
+  const scoresList = document.getElementById('bm-scores-list');
+  const scores     = book.scores || [];
+
+  if (scores.length) {
+    const sorted = [...scores].sort((a,b) => b.score - a.score);
+    scoresList.innerHTML = sorted.map(v => `
+      <div class="bm-score-row">
+        <span class="bm-score-name">${v.name}</span>
+        <span class="bm-score-stars">${starsHtml(v.score)}</span>
+        <span class="bm-score-num">${v.score}/5</span>
+      </div>`).join('');
+  } else {
+    scoresList.innerHTML = `<div class="bm-no-scores">No individual scores on record for this book.<br>Individual scores are captured going forward via Live Scoring.<br><br><em>Historical books only have the group average.</em></div>`;
+  }
+
+  document.getElementById('book-detail-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeBookModal(e) {
+  if (e && e.target !== document.getElementById('book-detail-modal')) return;
+  document.getElementById('book-detail-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function renderAdminBooksAll() {
+  const lists = ['admin-books-list', 'admin-books-list-scoring'];
+  lists.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = DATA.books.map((b,i) => `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,.06);">
+        <div style="flex:1;min-width:0;">
+          <div style="color:#fff;font-size:0.88rem;font-style:italic;font-family:'DM Serif Display',serif;">${b.title}</div>
+          <div style="color:rgba(255,255,255,.35);font-size:0.72rem;">${b.date}${b.scores&&b.scores.length?` · ${b.scores.length} individual score${b.scores.length>1?'s':''}`:''}</div>
+        </div>
+        <div style="color:rgba(255,255,255,.6);font-size:0.9rem;font-weight:600;min-width:32px;text-align:right;">${b.rating.toFixed(2)}</div>
+        <button class="btn-act btn-act-danger btn-act-sm" onclick="removeBook(${i})">✕</button>
+      </div>`).join('');
+  });
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -2159,9 +2722,13 @@ function restoreAdminPollUI() {
 // ════════════════════════════════════════════════════════════════
 //  INIT
 // ════════════════════════════════════════════════════════════════
+if (!DATA.scoring) {
+  DATA.scoring = { active:false, bookTitle:'', dateRead:'', showResults:true, scores:[] };
+}
 renderHero();
 renderBooks();
-// Poll only renders after member login (it lives inside the members area)
+loadBooksFromSupabase(); // async: overrides defaults if Supabase table has data
+// Poll and Scoring only render after member login (they live inside the members area)
 </script>
 </body>
 </html>
