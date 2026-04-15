@@ -262,7 +262,7 @@
     .sort-btn.active { background:var(--pink); border-color:var(--pink); color:#fff; }
 
     /* ── DATE POLL (public) ── */
-    #poll-section { background:var(--blush); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+    #poll-section {}
     .poll-dates-list { display:flex; flex-direction:column; gap:8px; margin-bottom:24px; }
     .poll-check-item {
       display:flex; align-items:center; gap:12px;
@@ -553,18 +553,18 @@
 
         <!-- Date Poll — members only, only shown when active -->
         <div id="poll-section" style="display:none; margin-bottom:24px;">
-          <div>
-            <h3 id="poll-public-title" style="font-family:'DM Serif Display',serif; font-size:1.35rem; color:var(--dark); margin-bottom:4px;">When's everyone free?</h3>
+          <div class="form-card" style="margin-bottom:0;">
+            <h3 id="poll-public-title" style="margin-bottom:4px;">When's everyone free?</h3>
             <p class="form-sub">Pick every date that works for you.</p>
             <div id="poll-vote-form">
-              <div class="poll-dates-list" id="poll-dates-grid"></div>
-              <div class="poll-form-row">
+              <div class="poll-form-row" style="margin-bottom:16px;">
                 <div class="poll-name-wrap">
                   <label class="fl">Your Name</label>
                   <input class="fi" type="text" id="poll-voter-name" placeholder="e.g. Sarah" />
                 </div>
-                <button class="btn btn-pink" onclick="submitPollVote()" style="height:42px;">Submit Availability</button>
               </div>
+              <div class="poll-dates-list" id="poll-dates-grid"></div>
+              <button class="btn btn-pink" onclick="submitPollVote()" style="height:42px; margin-top:8px;">Submit Availability</button>
             </div>
             <div class="poll-submitted" id="poll-submitted-msg">
               <h4>✓ Vote recorded!</h4>
@@ -749,6 +749,17 @@
             <button class="btn-act btn-act-outline" onclick="deactivatePoll()" id="deactivate-poll-btn" style="display:none;">✕ Deactivate &amp; Clear</button>
             <a href="https://doodle.com/create" target="_blank" class="btn-act btn-act-outline">↗ Use Doodle Instead</a>
           </div>
+        </div>
+
+        <!-- Update Title (shown when poll is active) -->
+        <div class="admin-card" id="poll-update-title-card" style="display:none;">
+          <h4>Update Poll Title</h4>
+          <p class="admin-card-sub">Change the title shown to members without affecting any votes already submitted.</p>
+          <div class="fg" style="margin-bottom:12px;">
+            <label class="afl">Poll Title</label>
+            <input class="afi" type="text" id="poll-title-update-input" placeholder="e.g. Next Book Club Meeting: Strangers by Belle Burden" />
+          </div>
+          <button class="btn-act btn-act-blue" onclick="updatePollTitle()">✓ Update Title</button>
         </div>
 
         <!-- Record a Vote -->
@@ -1938,9 +1949,11 @@ async function activatePoll() {
 
   renderPublicPoll();
   renderAdminPollResults();
-  document.getElementById('poll-record-card').style.display = 'block';
-  document.getElementById('poll-results-card').style.display = 'block';
-  document.getElementById('deactivate-poll-btn').style.display = 'inline-flex';
+  document.getElementById('poll-record-card').style.display       = 'block';
+  document.getElementById('poll-results-card').style.display      = 'block';
+  document.getElementById('poll-update-title-card').style.display = 'block';
+  document.getElementById('poll-title-update-input').value        = DATA.poll.title;
+  document.getElementById('deactivate-poll-btn').style.display    = 'inline-flex';
   buildRecordVoteDates();
   toast('✓ Poll activated! It\'s now live on the public site.');
 }
@@ -1957,9 +1970,10 @@ async function deactivatePoll() {
   } catch(e) {}
 
   renderPublicPoll();
-  document.getElementById('poll-record-card').style.display   = 'none';
-  document.getElementById('poll-results-card').style.display  = 'none';
-  document.getElementById('deactivate-poll-btn').style.display= 'none';
+  document.getElementById('poll-record-card').style.display       = 'none';
+  document.getElementById('poll-results-card').style.display      = 'none';
+  document.getElementById('poll-update-title-card').style.display = 'none';
+  document.getElementById('deactivate-poll-btn').style.display    = 'none';
   toast('Poll deactivated.');
 }
 
@@ -2101,6 +2115,21 @@ function useWinnerDate(date) {
   document.getElementById('tab-meeting').scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
+// ── Update poll title without touching votes ──────────────────
+async function updatePollTitle() {
+  const newTitle = document.getElementById('poll-title-update-input').value.trim();
+  if (!newTitle) { toast('Please enter a title.'); return; }
+  DATA.poll.title = newTitle;
+  try {
+    await savePollConfig();
+    // Update the title shown on the public site immediately
+    document.getElementById('poll-public-title').textContent = newTitle;
+    toast('✓ Title updated — votes are untouched!');
+  } catch(e) {
+    toast('Error saving title. Please try again.');
+  }
+}
+
 // ── Restore poll state on load ────────────────────────────────
 function restoreAdminPollUI() {
   const poll = DATA.poll;
@@ -2118,9 +2147,11 @@ function restoreAdminPollUI() {
     wrap.appendChild(row);
   });
   document.getElementById('poll-show-results-toggle').checked = !!poll.showResults;
-  document.getElementById('poll-record-card').style.display   = 'block';
-  document.getElementById('poll-results-card').style.display  = 'block';
-  document.getElementById('deactivate-poll-btn').style.display= 'inline-flex';
+  document.getElementById('poll-record-card').style.display         = 'block';
+  document.getElementById('poll-results-card').style.display        = 'block';
+  document.getElementById('poll-update-title-card').style.display   = 'block';
+  document.getElementById('poll-title-update-input').value          = poll.title || '';
+  document.getElementById('deactivate-poll-btn').style.display      = 'inline-flex';
   buildRecordVoteDates();
   renderAdminPollResults();
 }
