@@ -660,8 +660,10 @@
                     </div>
                   </div>
                   <div class="fg" style="margin-top:12px;">
-                    <label class="fl">Your Name</label>
-                    <input class="fi" type="text" id="score-voter-name" placeholder="e.g. Corey" />
+                    <label class="fl">Who are you?</label>
+                    <select class="fi" id="score-voter-email" onchange="onScoreMemberSelect()">
+                      <option value="">— Select your name —</option>
+                    </select>
                   </div>
                   <button class="btn btn-pink" onclick="submitMemberScore()" style="margin-top:4px;">Submit My Score</button>
                 </div>
@@ -1017,6 +1019,10 @@
       </div>
     </div>
     <div class="profile-fields" id="pm-fields"></div>
+    <div id="pm-scores-wrap" style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border);display:none;">
+      <div style="font-size:0.72rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">⭐ Books They've Rated <span id="pm-scores-count" style="color:var(--pink);"></span></div>
+      <div id="pm-scores-list" style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;"></div>
+    </div>
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);text-align:center;">
       <button class="btn btn-outline btn-sm" id="pm-edit-btn" onclick="editMyProfile()">✏️ Edit this profile</button>
     </div>
@@ -1691,6 +1697,45 @@ function openProfileModal(idx) {
     { label:'🔗 How They Found Us',val: p.how_heard },
   ].filter(f => f.val && f.val.trim());
 
+  // ── Books this member has rated ─────────────────────────────
+  const myScores = [];
+  const myEmail  = (m.email || '').toLowerCase();
+  (DATA.books || []).forEach(b => {
+    (b.scores || []).forEach(v => {
+      if (v.email && v.email.toLowerCase() === myEmail) {
+        myScores.push({ title: b.title, date: b.date, score: v.score, avg: b.rating });
+      }
+    });
+  });
+  const scoresWrap = document.getElementById('pm-scores-wrap');
+  const scoresList = document.getElementById('pm-scores-list');
+  const scoresCount = document.getElementById('pm-scores-count');
+  if (scoresWrap && scoresList) {
+    if (myScores.length) {
+      // Most-recent book first (books in DATA.books are already newest-first from Supabase)
+      scoresWrap.style.display = 'block';
+      if (scoresCount) scoresCount.textContent = `· ${myScores.length}`;
+      scoresList.innerHTML = myScores.map(v => {
+        const diff = (v.score - v.avg);
+        const diffLbl = !isFinite(diff) ? '' :
+                        Math.abs(diff) < 0.05 ? '<span style="color:var(--muted);font-size:0.7rem;">= group</span>'
+                        : diff > 0 ? `<span style="color:#1A7A4A;font-size:0.7rem;">+${diff.toFixed(2)} vs group</span>`
+                                   : `<span style="color:#A83030;font-size:0.7rem;">${diff.toFixed(2)} vs group</span>`;
+        return `
+          <div style="display:flex;align-items:center;gap:10px;background:var(--cream);border:1px solid var(--border);border-radius:10px;padding:8px 12px;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-family:'DM Serif Display',serif;font-style:italic;font-size:0.92rem;color:var(--dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${v.title}</div>
+              <div style="font-size:0.68rem;color:var(--muted);">${v.date} · ${diffLbl}</div>
+            </div>
+            <span class="bm-score-stars" style="color:#F5C518;font-size:0.85rem;letter-spacing:1px;">${starsHtml(v.score)}</span>
+            <span style="font-size:0.82rem;color:var(--text);font-weight:600;min-width:32px;text-align:right;">${v.score}/5</span>
+          </div>`;
+      }).join('');
+    } else {
+      scoresWrap.style.display = 'none';
+    }
+  }
+
   if (fields.length) {
     document.getElementById('pm-fields').innerHTML = fields.map(f => `
       <div class="profile-field">
@@ -2038,7 +2083,7 @@ async function saveMeeting() {
 function sendCalendarInvite() {
   const m    = DATA.meeting;
   const adds = DATA.members.map(mem=>`&add=${encodeURIComponent(mem.email)}`).join('');
-  const title= encodeURIComponent(`Book Club: ${m.book}`);
+  const title= encodeURIComponent(`Book Club: ${m.book} by ${m.author}`);
   const loc  = encodeURIComponent(m.location);
   const det  = encodeURIComponent(`Book Club meeting — ${m.book} by ${m.author}\n\nTime: ${m.time}\nLocation: ${m.location}`);
   // Use stored ISO dates or build a best-effort version
@@ -2220,6 +2265,9 @@ function renderPublicScoring() {
   const accTitle = document.getElementById('scoring-acc-title');
   if (accTitle) accTitle.textContent = `Rate "${s.bookTitle}"`;
 
+  // Populate the member dropdown (preserves current selection)
+  populateScoringDropdown();
+
   // Reset form to fresh state
   const form = document.getElementById('scoring-form');
   const conf = document.getElementById('scoring-submitted-msg');
@@ -2254,23 +2302,58 @@ function renderPublicScoring() {
   }
 }
 
+// Populate the "Who are you?" dropdown from DATA.members (alphabetized)
+function populateScoringDropdown() {
+  const dd = document.getElementById('score-voter-email');
+  if (!dd) return;
+  const current = dd.value;
+  const sorted = [...(DATA.members || [])].sort((a,b) => a.name.localeCompare(b.name));
+  dd.innerHTML = '<option value="">— Select your name —</option>' +
+    sorted.map(m => `<option value="${m.email}">${m.name}</option>`).join('');
+  if (current) dd.value = current;
+}
+
+// When a member picks their name from the dropdown, pre-fill any score
+// they've already submitted this session so they can see / update it.
+function onScoreMemberSelect() {
+  const dd = document.getElementById('score-voter-email');
+  if (!dd) return;
+  const email = dd.value.trim().toLowerCase();
+  if (!email) return;
+  const s = DATA.scoring;
+  if (!s || !s.scores) return;
+  const prev = s.scores.find(v => v.email && v.email.toLowerCase() === email);
+  const scoreInput = document.getElementById('score-voter-score');
+  if (prev && scoreInput) {
+    scoreInput.value = prev.score;
+    updateScoreVisual(prev.score);
+  }
+}
+
 async function submitMemberScore() {
-  const nameEl  = document.getElementById('score-voter-name');
+  const dd      = document.getElementById('score-voter-email');
   const scoreEl = document.getElementById('score-voter-score');
-  const name    = nameEl  ? nameEl.value.trim()  : '';
+  const email    = dd ? dd.value.trim() : '';
   const rawScore = scoreEl ? parseFloat(scoreEl.value) : NaN;
-  if (!name)                            { toast('Please enter your name!'); return; }
+  if (!email)                            { toast('Please select your name from the dropdown.'); return; }
   if (isNaN(rawScore) || rawScore < 1 || rawScore > 5) { toast('Please enter a score between 1 and 5.'); return; }
   const memberScore = Math.round(rawScore * 100) / 100;
 
+  const member = (DATA.members || []).find(m => m.email.toLowerCase() === email.toLowerCase());
+  if (!member) { toast('Hmm — that member wasn\'t found. Try again.'); return; }
+  const name = member.name;
+
   const s = DATA.scoring;
 
-  // Upsert: replace existing vote from same person
-  const existIdx = s.scores.findIndex(v => v.name.toLowerCase() === name.toLowerCase());
+  // Upsert by email (fallback to name match for any pre-email records)
+  const existIdx = s.scores.findIndex(v =>
+    (v.email && v.email.toLowerCase() === email.toLowerCase()) ||
+    (!v.email && v.name && v.name.toLowerCase() === name.toLowerCase())
+  );
   if (existIdx !== -1) {
-    s.scores[existIdx].score = memberScore;
+    s.scores[existIdx] = { name, email, score: memberScore };
   } else {
-    s.scores.push({ name, score: memberScore });
+    s.scores.push({ name, email, score: memberScore });
   }
 
   await saveScoringSession();
