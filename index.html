@@ -1703,7 +1703,13 @@ function openProfileModal(idx) {
   (DATA.books || []).forEach(b => {
     (b.scores || []).forEach(v => {
       if (v.email && v.email.toLowerCase() === myEmail) {
-        myScores.push({ title: b.title, date: b.date, score: v.score, avg: b.rating });
+        myScores.push({
+          title: b.title,
+          date: b.date,
+          score: v.score,
+          avg: b.rating,
+          voterCount: (b.scores || []).length
+        });
       }
     });
   });
@@ -1716,16 +1722,24 @@ function openProfileModal(idx) {
       scoresWrap.style.display = 'block';
       if (scoresCount) scoresCount.textContent = `· ${myScores.length}`;
       scoresList.innerHTML = myScores.map(v => {
-        const diff = (v.score - v.avg);
-        const diffLbl = !isFinite(diff) ? '' :
-                        Math.abs(diff) < 0.05 ? '<span style="color:var(--muted);font-size:0.7rem;">= group</span>'
-                        : diff > 0 ? `<span style="color:#1A7A4A;font-size:0.7rem;">+${diff.toFixed(2)} vs group</span>`
-                                   : `<span style="color:#A83030;font-size:0.7rem;">${diff.toFixed(2)} vs group</span>`;
+        // Only show a "vs group" comparison when more than one person rated this book,
+        // otherwise their score is the group average and the comparison is meaningless.
+        let diffLbl = '';
+        if (v.voterCount > 1 && isFinite(v.avg)) {
+          const diff = v.score - v.avg;
+          if (Math.abs(diff) < 0.05) {
+            diffLbl = ` · <span style="color:var(--muted);font-size:0.7rem;">matched group avg</span>`;
+          } else if (diff > 0) {
+            diffLbl = ` · <span style="color:#1A7A4A;font-size:0.7rem;">+${diff.toFixed(2)} above group avg</span>`;
+          } else {
+            diffLbl = ` · <span style="color:#A83030;font-size:0.7rem;">${diff.toFixed(2)} below group avg</span>`;
+          }
+        }
         return `
           <div style="display:flex;align-items:center;gap:10px;background:var(--cream);border:1px solid var(--border);border-radius:10px;padding:8px 12px;">
             <div style="flex:1;min-width:0;">
               <div style="font-family:'DM Serif Display',serif;font-style:italic;font-size:0.92rem;color:var(--dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${v.title}</div>
-              <div style="font-size:0.68rem;color:var(--muted);">${v.date} · ${diffLbl}</div>
+              <div style="font-size:0.68rem;color:var(--muted);">${v.date}${diffLbl}</div>
             </div>
             <span class="bm-score-stars" style="color:#F5C518;font-size:0.85rem;letter-spacing:1px;">${starsHtml(v.score)}</span>
             <span style="font-size:0.82rem;color:var(--text);font-weight:600;min-width:32px;text-align:right;">${v.score}/5</span>
