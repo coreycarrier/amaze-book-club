@@ -1293,6 +1293,55 @@ async function saveScoringSession() {
   }
 }
 
+// ════════════════════════════════════════════════════════════════
+//  SUPABASE: MEETING CONFIG
+// ════════════════════════════════════════════════════════════════
+async function loadMeetingFromSupabase() {
+  try {
+    const { data, error } = await db.from('meeting_config').select('*').eq('id','current').maybeSingle();
+    if (error) throw error;
+    if (data) {
+      DATA.meeting = {
+        book:       data.book       || '',
+        author:     data.author     || '',
+        isbn:       data.isbn       || '',
+        date:       data.date_display || 'TBD',
+        time:       data.time_display || '',
+        location:   data.location   || '',
+        dateISO:    data.date_iso     || '',
+        dateISOend: data.date_iso_end || ''
+      };
+      saveData();
+      renderHero();
+      // Re-populate admin form if it's currently showing
+      if (document.getElementById('m-title')) populateMeetingForm();
+    }
+  } catch(e) {
+    console.warn('Meeting config table not ready (run create_meeting_config.sql):', e.message);
+  }
+}
+
+async function saveMeetingToSupabase() {
+  try {
+    const m = DATA.meeting;
+    const { error } = await db.from('meeting_config').upsert({
+      id:           'current',
+      book:         m.book,
+      author:       m.author,
+      isbn:         m.isbn,
+      date_display: m.date,
+      time_display: m.time,
+      location:     m.location,
+      date_iso:     m.dateISO,
+      date_iso_end: m.dateISOend,
+      updated_at:   new Date().toISOString()
+    });
+    if (error) throw error;
+  } catch(e) {
+    console.warn('Could not save meeting to Supabase:', e.message);
+  }
+}
+
 // ── Poll: save config to Supabase ─────────────────────────────
 async function savePollConfig() {
   try {
@@ -1460,10 +1509,23 @@ function setSort(mode) {
   renderBooks();
 }
 
+// Parse a "MMM YYYY" date_read string into a sortable number (year*12 + month).
+// Returns -Infinity for unparseable strings so they sort to the oldest end.
+function bookDateRank(str) {
+  if (!str) return -Infinity;
+  const months = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+  const parts = String(str).trim().split(/\s+/);
+  if (parts.length < 2) return -Infinity;
+  const m = months[parts[0].slice(0,3)];
+  const y = parseInt(parts[1], 10);
+  if (m === undefined || isNaN(y)) return -Infinity;
+  return y * 12 + m;
+}
+
 function getSortedBooks() {
   const books = [...DATA.books]; // copy so we don't mutate original order
-  if (currentSort === 'date-desc')  return books;             // already newest-first
-  if (currentSort === 'date-asc')   return [...books].reverse();
+  if (currentSort === 'date-desc')  return books.sort((a,b) => bookDateRank(b.date) - bookDateRank(a.date));
+  if (currentSort === 'date-asc')   return books.sort((a,b) => bookDateRank(a.date) - bookDateRank(b.date));
   if (currentSort === 'score-desc') return books.sort((a,b) => b.rating - a.rating);
   if (currentSort === 'score-asc')  return books.sort((a,b) => a.rating - b.rating);
   return books;
@@ -1957,17 +2019,18 @@ function populateMeetingForm() {
   document.getElementById('m-location').value = m.location;
 }
 
-function saveMeeting() {
+async function saveMeeting() {
   DATA.meeting.book     = document.getElementById('m-title').value.trim()    || DATA.meeting.book;
   DATA.meeting.author   = document.getElementById('m-author').value.trim()   || DATA.meeting.author;
   DATA.meeting.isbn     = document.getElementById('m-isbn').value.trim();
   DATA.meeting.date     = document.getElementById('m-date').value.trim()     || DATA.meeting.date;
   DATA.meeting.time     = document.getElementById('m-time').value.trim()     || DATA.meeting.time;
-  DATA.meeting.location = document.getElementById('m-location').value.trim() || DATA.meeting.location;
+  DATA.meeting.location = document.getElementById('m-location').value.trim() || DATA.meeting.location || '';
   // Auto-compute ISO dates for calendar invite
   const iso = parseDateToISO(DATA.meeting.date);
   if (iso) { DATA.meeting.dateISO = iso.dateISO; DATA.meeting.dateISOend = iso.dateISOend; }
   saveData();
+  await saveMeetingToSupabase();
   renderHero();
   toast('✓ Meeting updated on the homepage!');
 }
@@ -2799,8 +2862,9 @@ if (!DATA.scoring) {
 }
 renderHero();
 renderBooks();
-loadBooksFromSupabase();  // async: overrides defaults if Supabase table has data
-loadRsvpFromSupabase();   // async: pulls latest RSVP responses from Google Calendar sync
+loadBooksFromSupabase();    // async: overrides defaults if Supabase table has data
+loadMeetingFromSupabase();  // async: pulls the current next-meeting details
+loadRsvpFromSupabase();     // async: pulls latest RSVP responses from Google Calendar sync
 // Poll and Scoring only render after member login (they live inside the members area)
 </script>
 </body>
