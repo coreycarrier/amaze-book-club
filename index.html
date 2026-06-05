@@ -1263,7 +1263,10 @@ async function deleteBookFromSupabase(id) {
 // ════════════════════════════════════════════════════════════════
 async function loadScoringSession() {
   try {
-    const { data, error } = await db.from('scoring_session').select('*').eq('id','active').maybeSingle();
+    const [{ data, error }, { data: votes }] = await Promise.all([
+      db.from('scoring_session').select('*').eq('id','active').maybeSingle(),
+      db.from('scoring_votes').select('*').eq('session_id','active').order('updated_at')
+    ]);
     if (error) throw error;
     if (data) {
       DATA.scoring = {
@@ -1271,7 +1274,7 @@ async function loadScoringSession() {
         bookTitle:   data.book_title || '',
         dateRead:    data.date_read  || '',
         showResults: data.show_results !== false,
-        scores:      data.scores || []
+        scores:      (votes || []).map(v => ({ name: v.name, email: v.email, score: parseFloat(v.score) }))
       };
     } else {
       DATA.scoring = { active:false, bookTitle:'', dateRead:'', showResults:true, scores:[] };
@@ -1291,7 +1294,7 @@ async function saveScoringSession() {
       date_read:    s.dateRead,
       active:       s.active,
       show_results: s.showResults,
-      scores:       s.scores,
+      scores:       [],   // kept for schema compat; real votes live in scoring_votes
       updated_at:   new Date().toISOString()
     });
   } catch(e) {
@@ -2357,23 +2360,17 @@ async function submitMemberScore() {
   if (!member) { toast('Hmm — that member wasn\'t found. Try again.'); return; }
   const name = member.name;
 
-  const s = DATA.scoring;
-
-  // Upsert by email (fallback to name match for any pre-email records)
-  const existIdx = s.scores.findIndex(v =>
-    (v.email && v.email.toLowerCase() === email.toLowerCase()) ||
-    (!v.email && v.name && v.name.toLowerCase() === name.toLowerCase())
+  // Atomic upsert — each voter has their own row, no race condition with concurrent votes
+  const { error } = await db.from('scoring_votes').upsert(
+    { session_id: 'active', email: email.toLowerCase(), name, score: memberScore, updated_at: new Date().toISOString() },
+    { onConflict: 'session_id,email' }
   );
-  if (existIdx !== -1) {
-    s.scores[existIdx] = { name, email, score: memberScore };
-  } else {
-    s.scores.push({ name, email, score: memberScore });
-  }
+  if (error) { toast('Error saving your score — please try again.'); console.error(error); return; }
 
-  await saveScoringSession();
-  // Reload fresh so any concurrent votes are included
+  // Reload to pick up everyone's current votes
   await loadScoringSession();
 
+  const s = DATA.scoring;
   const textEl = document.getElementById('scoring-submitted-text');
   if (textEl) textEl.textContent = `You gave "${s.bookTitle}" a ${memberScore}! ✨`;
 
@@ -2383,14 +2380,14 @@ async function submitMemberScore() {
   if (conf) conf.style.display = 'block';
 
   // Show live results if enabled
-  if (DATA.scoring.showResults) {
+  if (s.showResults) {
     const resultsDiv = document.getElementById('scoring-results-pub');
     if (resultsDiv) {
       resultsDiv.style.display = 'block';
-      const avg = DATA.scoring.scores.reduce((sum,v)=>sum+v.score,0)/DATA.scoring.scores.length;
+      const avg = s.scores.reduce((sum,v)=>sum+v.score,0)/s.scores.length;
       const voterListEl = document.getElementById('scoring-voter-list-pub');
       if (voterListEl) {
-        voterListEl.innerHTML = DATA.scoring.scores.map(v => `
+        voterListEl.innerHTML = s.scores.map(v => `
           <div class="score-voter-row">
             <span class="score-voter-name">${v.name}</span>
             <span class="score-stars-gold">${starsHtml(v.score)}</span>
@@ -2399,7 +2396,7 @@ async function submitMemberScore() {
       }
       const avgEl = document.getElementById('scoring-avg-pub');
       if (avgEl) {
-        avgEl.innerHTML = `<div class="score-avg-badge">⭐ ${avg.toFixed(2)} avg · ${DATA.scoring.scores.length} vote${DATA.scoring.scores.length>1?'s':''}</div>`;
+        avgEl.innerHTML = `<div class="score-avg-badge">⭐ ${avg.toFixed(2)} avg · ${s.scores.length} vote${s.scores.length>1?'s':''}</div>`;
       }
     }
   }
@@ -2423,6 +2420,9 @@ async function startScoringSession() {
   const dateRead = (document.getElementById('score-book-date')?.value || '').trim();
   if (!title || !dateRead) { toast('Please fill in the book title and date.'); return; }
 
+  // Clear any leftover votes from a previous session
+  await db.from('scoring_votes').delete().eq('session_id', 'active');
+
   DATA.scoring = { active:true, bookTitle:title, dateRead, showResults:true, scores:[] };
   await saveScoringSession();
   renderAdminScoring();
@@ -2431,6 +2431,7 @@ async function startScoringSession() {
 
 async function cancelScoringSession() {
   if (!confirm('Cancel the scoring session? All votes will be lost.')) return;
+  await db.from('scoring_votes').delete().eq('session_id', 'active');
   DATA.scoring = { active:false, bookTitle:'', dateRead:'', showResults:true, scores:[] };
   await saveScoringSession();
   renderAdminScoring();
@@ -2455,6 +2456,9 @@ async function finalizeScoringSession() {
   };
   DATA.books.unshift(newBook);
   saveData();
+
+  // Clear votes from the atomic table now that they're saved to books
+  await db.from('scoring_votes').delete().eq('session_id', 'active');
 
   DATA.scoring = { active:false, bookTitle:'', dateRead:'', showResults:true, scores:[] };
   await saveScoringSession();
