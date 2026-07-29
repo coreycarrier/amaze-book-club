@@ -1,0 +1,17 @@
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Secrets — never commit real keys
+# (The Supabase service_role key lives only in Google Apps Script, not here.)
+.env
+.env.*
+*.local
+secrets.*
+
+# Logs / temp
+*.log
+node_modules/
