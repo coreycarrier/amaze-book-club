@@ -627,6 +627,42 @@
         </div>
       </div>
       <div id="members-content">
+        <!-- ── ACCORDION: DATE POLL (shown when poll active) ── -->
+        <div class="accordion-wrap" id="acc-poll" style="display:none;">
+          <button class="accordion-header" onclick="toggleAccordion('acc-poll')">
+            <span class="acc-icon">📅</span>
+            <span class="acc-title" id="poll-acc-title">When's Everyone Free?</span>
+            <span class="acc-chevron">▾</span>
+          </button>
+          <div class="accordion-body">
+            <div class="accordion-body-inner">
+              <div id="poll-section">
+                <h3 id="poll-public-title" style="display:none;"></h3>
+                <p class="form-sub" style="margin-bottom:16px;">Pick every date that works for you.</p>
+                <div id="poll-vote-form">
+                  <div class="poll-form-row" style="margin-bottom:16px;">
+                    <div class="poll-name-wrap">
+                      <label class="fl">Your Name</label>
+                      <select class="fi" id="poll-voter-email" onchange="onPollMemberSelect()"></select>
+                    </div>
+                  </div>
+                  <div class="poll-dates-list" id="poll-dates-grid"></div>
+                  <button class="btn btn-pink" onclick="submitPollVote()" style="height:42px; margin-top:8px;">Submit Availability</button>
+                </div>
+                <div class="poll-submitted" id="poll-submitted-msg">
+                  <h4>✓ Vote recorded!</h4>
+                  <p>Your availability is saved. Corey will confirm the date once everyone has voted.</p>
+                  <button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="document.getElementById('poll-submitted-msg').style.display='none';document.getElementById('poll-vote-form').style.display='block';onPollMemberSelect();">Change my vote</button>
+                </div>
+                <div id="poll-public-results" style="display:none; margin-top:24px;">
+                  <div style="font-size:0.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;">Current Standings</div>
+                  <div class="poll-results-grid" id="poll-results-public"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="members-grid" id="members-grid"></div>
 
         <!-- ── ACCORDION: BOOK SCORING (shown when session active) ── -->
@@ -677,42 +713,6 @@
                   <div class="score-who-label">Scores so far</div>
                   <div class="score-voter-list" id="scoring-voter-list-pub"></div>
                   <div id="scoring-avg-pub"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ── ACCORDION: DATE POLL (shown when poll active) ── -->
-        <div class="accordion-wrap" id="acc-poll" style="display:none;">
-          <button class="accordion-header" onclick="toggleAccordion('acc-poll')">
-            <span class="acc-icon">📅</span>
-            <span class="acc-title" id="poll-acc-title">When's Everyone Free?</span>
-            <span class="acc-chevron">▾</span>
-          </button>
-          <div class="accordion-body">
-            <div class="accordion-body-inner">
-              <div id="poll-section">
-                <h3 id="poll-public-title" style="display:none;"></h3>
-                <p class="form-sub" style="margin-bottom:16px;">Pick every date that works for you.</p>
-                <div id="poll-vote-form">
-                  <div class="poll-form-row" style="margin-bottom:16px;">
-                    <div class="poll-name-wrap">
-                      <label class="fl">Your Name</label>
-                      <select class="fi" id="poll-voter-email" onchange="onPollMemberSelect()"></select>
-                    </div>
-                  </div>
-                  <div class="poll-dates-list" id="poll-dates-grid"></div>
-                  <button class="btn btn-pink" onclick="submitPollVote()" style="height:42px; margin-top:8px;">Submit Availability</button>
-                </div>
-                <div class="poll-submitted" id="poll-submitted-msg">
-                  <h4>✓ Vote recorded!</h4>
-                  <p>Your availability is saved. Corey will confirm the date once everyone has voted.</p>
-                  <button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="document.getElementById('poll-submitted-msg').style.display='none';document.getElementById('poll-vote-form').style.display='block';onPollMemberSelect();">Change my vote</button>
-                </div>
-                <div id="poll-public-results" style="display:none; margin-top:24px;">
-                  <div style="font-size:0.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;">Current Standings</div>
-                  <div class="poll-results-grid" id="poll-results-public"></div>
                 </div>
               </div>
             </div>
