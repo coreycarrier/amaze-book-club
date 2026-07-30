@@ -558,7 +558,8 @@
         <div class="cover-img-wrap">
           <img id="cover-img" src="https://covers.openlibrary.org/b/isbn/9780802165176-L.jpg"
                alt="Current book cover"
-               onerror="this.style.display='none';document.getElementById('cover-fb').style.display='flex';" />
+               onerror="this.style.display='none';document.getElementById('cover-fb').style.display='flex';"
+               onload="if(this.naturalWidth<=1){this.style.display='none';document.getElementById('cover-fb').style.display='flex';}" />
           <div id="cover-fb" class="cover-fallback" style="display:none;"></div>
         </div>
         <div class="hero-book-info">
@@ -698,7 +699,7 @@
                   <div class="poll-form-row" style="margin-bottom:16px;">
                     <div class="poll-name-wrap">
                       <label class="fl">Your Name</label>
-                      <input class="fi" type="text" id="poll-voter-name" placeholder="e.g. Sarah" />
+                      <select class="fi" id="poll-voter-email" onchange="onPollMemberSelect()"></select>
                     </div>
                   </div>
                   <div class="poll-dates-list" id="poll-dates-grid"></div>
@@ -707,7 +708,7 @@
                 <div class="poll-submitted" id="poll-submitted-msg">
                   <h4>✓ Vote recorded!</h4>
                   <p>Your availability is saved. Corey will confirm the date once everyone has voted.</p>
-                  <button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="document.getElementById('poll-submitted-msg').style.display='none';document.getElementById('poll-vote-form').style.display='block';">Change my vote</button>
+                  <button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="document.getElementById('poll-submitted-msg').style.display='none';document.getElementById('poll-vote-form').style.display='block';onPollMemberSelect();">Change my vote</button>
                 </div>
                 <div id="poll-public-results" style="display:none; margin-top:24px;">
                   <div style="font-size:0.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;">Current Standings</div>
@@ -1182,6 +1183,7 @@ async function loadPollFromSupabase() {
       DATA.poll.showResults = cfg.show_results;
       DATA.poll.votes       = (votes || []).map(v => ({
         name:      v.voter_name,
+        email:     v.voter_email || '',
         available: v.available_dates || []   // array of date strings
       }));
     } else {
@@ -1281,6 +1283,7 @@ async function loadMembersFromSupabase() {
       renderAdminMembers();
       renderHero();
       populateScoringDropdown();
+      populatePollDropdown();
     } else {
       // Table exists but is empty — seed it from whatever's in this browser
       // right now (localStorage / defaults) so nobody's roster gets lost.
@@ -1398,6 +1401,7 @@ async function loadMeetingFromSupabase() {
         book:       data.book       || '',
         author:     data.author     || '',
         isbn:       data.isbn       || '',
+        coverUrl:   data.cover_url  || '',
         date:       data.date_display || 'TBD',
         time:       data.time_display || '',
         location:   data.location   || '',
@@ -1560,7 +1564,11 @@ function renderHero() {
   const imgEl = document.getElementById('cover-img');
   const fbEl  = document.getElementById('cover-fb');
   fbEl.textContent = m.book;
-  if (m.isbn) {
+  if (m.coverUrl) {
+    imgEl.src = m.coverUrl;
+    imgEl.style.display = 'block';
+    fbEl.style.display  = 'none';
+  } else if (m.isbn) {
     imgEl.src = `https://covers.openlibrary.org/b/isbn/${m.isbn}-L.jpg`;
     imgEl.style.display = 'block';
     fbEl.style.display  = 'none';
@@ -2704,6 +2712,7 @@ function renderPublicPoll() {
   }
 
   openAccordion('acc-poll');
+  populatePollDropdown();
 
   // Update accordion header title
   const accTitle = document.getElementById('poll-acc-title');
@@ -2732,9 +2741,47 @@ function togglePollDate(i) {
   document.getElementById('pdc-'+i).classList.toggle('selected');
 }
 
+// Keeps the poll's name dropdown in sync with the members list, same pattern
+// as the scoring dropdown (populateScoringDropdown).
+function populatePollDropdown() {
+  const dd = document.getElementById('poll-voter-email');
+  if (!dd) return;
+  const current = dd.value;
+  const sorted = [...(DATA.members || [])].sort((a,b) => a.name.localeCompare(b.name));
+  dd.innerHTML = '<option value="">— Select your name —</option>' +
+    sorted.map(m => `<option value="${m.email}">${m.name}</option>`).join('');
+  if (current) dd.value = current;
+}
+
+// When a member picks their name, load whatever they already voted for (if
+// anything) so they can see and adjust it instead of starting from scratch.
+function onPollMemberSelect() {
+  const dd = document.getElementById('poll-voter-email');
+  if (!dd) return;
+  // Re-showing the form (e.g. via "Change my vote") can leave the submit
+  // button stuck disabled/"Saving…" from a prior successful submit — reset it.
+  const btn = document.querySelector('#poll-vote-form .btn-pink');
+  if (btn) { btn.disabled = false; btn.textContent = 'Submit Availability'; }
+  const email = dd.value.trim().toLowerCase();
+  DATA.poll.dates.forEach((_,i) => {
+    document.getElementById('pdc-'+i)?.classList.remove('selected');
+  });
+  if (!email) return;
+  const existing = (DATA.poll.votes || []).find(v => v.email && v.email.toLowerCase() === email);
+  if (existing) {
+    DATA.poll.dates.forEach((d,i) => {
+      if (existing.available.includes(d)) document.getElementById('pdc-'+i)?.classList.add('selected');
+    });
+    toast('Loaded your previous vote — change it and resubmit anytime.');
+  }
+}
+
 async function submitPollVote() {
-  const name = document.getElementById('poll-voter-name').value.trim();
-  if (!name) { toast('Please enter your name first!'); return; }
+  const dd    = document.getElementById('poll-voter-email');
+  const email = dd ? dd.value.trim() : '';
+  if (!email) { toast('Please select your name first!'); return; }
+  const member = DATA.members.find(m => m.email.toLowerCase() === email.toLowerCase());
+  const name = member ? member.name : email;
 
   const selectedDates = DATA.poll.dates.filter((_,i) =>
     document.getElementById('pdc-'+i)?.classList.contains('selected'));
@@ -2745,17 +2792,17 @@ async function submitPollVote() {
   if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
 
   try {
-    // Check if this person already voted (case-insensitive match)
+    // Check if this member already voted (case-insensitive email match)
     const { data: existing } = await db.from('poll_votes')
-      .select('id').ilike('voter_name', name).maybeSingle();
+      .select('id').ilike('voter_email', email).maybeSingle();
 
     if (existing) {
       await db.from('poll_votes')
-        .update({ available_dates: selectedDates })
+        .update({ voter_name: name, available_dates: selectedDates })
         .eq('id', existing.id);
     } else {
       await db.from('poll_votes')
-        .insert({ voter_name: name, available_dates: selectedDates });
+        .insert({ voter_name: name, voter_email: email.toLowerCase(), available_dates: selectedDates });
     }
 
     // Reload fresh data so results are accurate
