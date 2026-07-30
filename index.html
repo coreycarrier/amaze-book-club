@@ -1259,6 +1259,90 @@ async function deleteBookFromSupabase(id) {
 }
 
 // ════════════════════════════════════════════════════════════════
+//  SUPABASE: MEMBERS
+// ════════════════════════════════════════════════════════════════
+async function loadMembersFromSupabase() {
+  try {
+    const { data, error } = await db.from('members').select('*').order('created_at', { ascending: true });
+    if (error) throw error;
+    if (data && data.length > 0) {
+      DATA.members = data.map(row => {
+        const existing = DATA.members.find(m => m.email.toLowerCase() === row.email.toLowerCase());
+        return {
+          id:      row.id,
+          name:    row.name,
+          email:   row.email,
+          joined:  row.joined || '',
+          profile: (existing && existing.profile) || {...EMPTY_PROFILE},
+        };
+      });
+      saveData();
+      renderPublicMembers();
+      renderAdminMembers();
+      renderHero();
+      populateScoringDropdown();
+    } else {
+      // Table exists but is empty — seed it from whatever's in this browser
+      // right now (localStorage / defaults) so nobody's roster gets lost.
+      await migrateMembersToSupabase();
+    }
+  } catch(e) {
+    console.warn('Members table not ready (run the SQL setup first):', e.message);
+  }
+}
+
+async function migrateMembersToSupabase() {
+  try {
+    const rows = DATA.members.map(m => ({ name: m.name, email: m.email.toLowerCase(), joined: m.joined || '' }));
+    if (!rows.length) return;
+    // upsert + ignoreDuplicates so two simultaneous first-loads seeding the same
+    // empty table don't collide on the email unique constraint and abort the batch
+    const { data, error } = await db.from('members').upsert(rows, { onConflict: 'email', ignoreDuplicates: true }).select();
+    if (error) throw error;
+    if (data) {
+      data.forEach(row => {
+        const idx = DATA.members.findIndex(m => m.email.toLowerCase() === row.email.toLowerCase());
+        if (idx !== -1) DATA.members[idx].id = row.id;
+      });
+      saveData();
+    }
+  } catch(e) {
+    console.warn('Could not migrate members to Supabase:', e.message);
+  }
+}
+
+async function insertMemberToSupabase(name, email, joined) {
+  try {
+    const { data, error } = await db.from('members').insert({ name, email: email.toLowerCase(), joined }).select().single();
+    if (error) throw error;
+    return data;
+  } catch(e) {
+    console.warn('Could not save member to Supabase:', e.message);
+    return null;
+  }
+}
+
+async function deleteMemberFromSupabase(email) {
+  try {
+    const { error } = await db.from('members').delete().eq('email', email.toLowerCase());
+    if (error) throw error;
+  } catch(e) {
+    console.warn('Could not delete member from Supabase:', e.message);
+  }
+}
+
+async function updateMemberInSupabase(oldEmail, name, newEmail) {
+  try {
+    const { error } = await db.from('members')
+      .update({ name, email: newEmail.toLowerCase() })
+      .eq('email', oldEmail.toLowerCase());
+    if (error) throw error;
+  } catch(e) {
+    console.warn('Could not update member in Supabase:', e.message);
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
 //  SUPABASE: SCORING SESSION
 // ════════════════════════════════════════════════════════════════
 async function loadScoringSession() {
@@ -1962,6 +2046,7 @@ function closeAdminProfileModal(e) {
 async function saveAdminProfile() {
   const idx = parseInt(document.getElementById('apm-idx').value);
   if (isNaN(idx) || !DATA.members[idx]) return;
+  const oldEmail = DATA.members[idx].email;
   const newName  = document.getElementById('apm-name').value.trim();
   const newEmail = document.getElementById('apm-email').value.trim();
   if (newName)  DATA.members[idx].name  = newName;
@@ -1977,9 +2062,12 @@ async function saveAdminProfile() {
   DATA.members[idx].profile = profile;
   saveData();
   // Save to Supabase so everyone sees it
-  const emailToSave = newEmail || DATA.members[idx].email;
+  const emailToSave = newEmail || oldEmail;
   toast('Saving…');
   await saveProfileToSupabase(emailToSave, profile);
+  if (newName || newEmail) {
+    await updateMemberInSupabase(oldEmail, DATA.members[idx].name, DATA.members[idx].email);
+  }
   renderPublicMembers();
   renderAdminMembers();
   renderHero();
@@ -2008,12 +2096,13 @@ function renderAdminMembers() {
   updateEmailList();
 }
 
-function addMember() {
+async function addMember() {
   const name  = document.getElementById('new-member-name').value.trim();
   const email = document.getElementById('new-member-email').value.trim();
   if (!name || !email) { toast('Please enter a name and email.'); return; }
   const now = new Date().toLocaleString('en-US',{month:'short',year:'numeric'});
-  DATA.members.push({ name, email, joined: now, profile:{...EMPTY_PROFILE} });
+  const newMember = { name, email, joined: now, profile:{...EMPTY_PROFILE} };
+  DATA.members.push(newMember);
   saveData();
   document.getElementById('new-member-name').value  = '';
   document.getElementById('new-member-email').value = '';
@@ -2021,10 +2110,13 @@ function addMember() {
   renderPublicMembers();
   renderHero();
   toast(`✓ ${name} added to the club!`);
+  const row = await insertMemberToSupabase(name, email, now);
+  if (row) { newMember.id = row.id; saveData(); }
 }
 
-function removeMember(idx) {
-  const name = DATA.members[idx].name;
+async function removeMember(idx) {
+  const name  = DATA.members[idx].name;
+  const email = DATA.members[idx].email;
   if (!confirm(`Remove ${name} from Book Club?`)) return;
   DATA.members.splice(idx, 1);
   saveData();
@@ -2032,6 +2124,7 @@ function removeMember(idx) {
   renderPublicMembers();
   renderHero();
   toast(`${name} has been removed.`);
+  await deleteMemberFromSupabase(email);
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -2963,6 +3056,7 @@ if (!DATA.scoring) {
 }
 renderHero();
 renderBooks();
+loadMembersFromSupabase();  // async: overrides defaults if Supabase table has data (seeds it on first run)
 loadBooksFromSupabase();    // async: overrides defaults if Supabase table has data
 loadMeetingFromSupabase();  // async: pulls the current next-meeting details
 loadRsvpFromSupabase();     // async: pulls latest RSVP responses from Google Calendar sync
